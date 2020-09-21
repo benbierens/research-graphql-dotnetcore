@@ -20,6 +20,7 @@ namespace graphql_web
         {
             services.AddGraphQL(sp => SchemaBuilder.New()
                 .AddQueryType<Query>()
+                .AddMutationType<Mutation>()
                 .AddServices(sp)
                 .Create());
         }
