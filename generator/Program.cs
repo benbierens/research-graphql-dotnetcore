@@ -36,10 +36,21 @@ namespace generator
             private const string gqlFolder = "gql";
             private const string gqlQueriesName = "Queries";
             private const string gqlQueriesNameFilename = "Queries";
+            private const string gqlTypesName = "GraphQlTypes";
+
+            private const string gqlTypesFileName = "GraphQlTypes";
             private const string gqlMutationsName = "Mutations";
             private const string gqlMutationsNameFilename = "Mutations";
+            private const string gqlMutationsInputTypePostfix = "Input";
+            private const string gqlMutationsCreateMethod = "Create";
+            private const string gqlMutationsUpdateMethod = "Update";
+            private const string gqlMutationsDeleteMethod = "Delete";
+
             private const string gqlSubscriptionsName = "Subscriptions";
             private const string gqlSubscriptionsNameFilename = "Subscriptions";
+            private const string gqlSubscriptionCreatedMethod = "Created";
+            private const string gqlSubscriptionUpdatedMethod = "Updated";
+            private const string gqlSubscriptionDeletedMethod = "Deleted";
 
             public Generator(GeneratorConfig config)
             {
@@ -50,7 +61,7 @@ namespace generator
             {
                 MakeDir();
 
-                CreateDotnetProject();
+                //CreateDotnetProject();
 
                 MakeDir(generatedFolder);
                 GenerateDtos();
@@ -74,19 +85,112 @@ namespace generator
             {
                 MakeDir(generatedFolder, gqlFolder);
                 GenerateQueries();
+                GenerateSubscriptions();
+                GenerateTypes();
+                GenerateMutations();
             }
 
             private void GenerateQueries()
             {
-                //asasasa1
+                var fm = StartFile(gqlFolder, gqlQueriesNameFilename);
+                var cm = StartClass(fm, gqlQueriesName);
+                cm.AddUsing("System.Threading.Tasks");
+                cm.AddUsing("Microsoft.EntityFrameworkCore");
+
+                foreach (var model in config.Models)
+                {
+                    cm.AddClosure("public async Task<" + model.Name +"[]> " + model.Name + "s()", liner => 
+                    {
+                        liner.StartClosure("using (var db = new DatabaseContext())");
+                        liner.Add("return await db." + model.Name + "s.ToArrayAsync();");
+                        liner.EndClosure();
+                    });
+                }
+
+                fm.Build();
+            }
+
+            private void GenerateSubscriptions()
+            {
+                var fm = StartFile(gqlFolder, gqlSubscriptionsNameFilename);
+                var cm = StartClass(fm, gqlSubscriptionsName);
+                cm.AddUsing("HotChocolate");
+                cm.AddUsing("HotChocolate.Subscriptions");
+                cm.AddUsing("HotChocolate.Types");
+
+                foreach (var model in config.Models)
+                {
+                    AddSubscriptionMethod(cm, model.Name, gqlSubscriptionCreatedMethod);
+                    AddSubscriptionMethod(cm, model.Name, gqlSubscriptionUpdatedMethod);
+                    AddSubscriptionMethod(cm, model.Name, gqlSubscriptionDeletedMethod);
+                }
+
+                fm.Build();
+            }
+
+            private void GenerateTypes()
+            {
+                var fm = StartFile(gqlFolder, gqlTypesFileName);
+
+                foreach (var model in config.Models)
+                {
+                    var addClass = StartClass(fm, gqlMutationsCreateMethod + model.Name + gqlMutationsInputTypePostfix);
+                    AddModelFields(addClass, model);
+                    AddForeignProperties(addClass, model, true);
+                    
+                    var updateClass = StartClass(fm, gqlMutationsUpdateMethod + model.Name + gqlMutationsInputTypePostfix);
+                    AddModelFieldsAsNullable(updateClass, model);
+                    AddForeignPropertiesAsNullable(updateClass, model, true);
+
+                    var deleteClass = StartClass(fm, gqlMutationsDeleteMethod + model.Name + gqlMutationsInputTypePostfix);
+                    deleteClass.AddProperty(config.Config.IdType, model.Name + "Id");
+                }
+
+                fm.Build();
+            }
+
+            private void GenerateMutations()
+            {
+        // public async Task<Cat> MoveCat(MoveCatInput input, [Service] ITopicEventSender sender)
+        // {
+        //     var result = Data.Instance.MoveCat(input.CatIndex, input.CouchIndex);
+
+        //     await sender.SendAsync("OnCatChanged", result);
+
+        //     return result;
+        // }
+
+                var fm = StartFile(gqlFolder, gqlMutationsNameFilename);
+                var cm = StartClass(fm, gqlMutationsName);
+                cm.AddUsing("System.Threading.Tasks");
+                cm.AddUsing("HotChocolate");
+                cm.AddUsing("HotChocolate.Subscriptions");
+
+                foreach (var model in config.Models)
+                {
+                    create method, update method, delete method.
+                }
+
+                fm.Build();
+
+            }
+
+            private void AddSubscriptionMethod(ClassMaker cm, string modelName, string method)
+            {
+                var n =  modelName;
+                var l = n.ToLowerInvariant();
+                cm.AddLine("[Subscribe]");
+                cm.AddLine("public " + n + " " + n + method + "([EventMessage] " + n + " _" + l + ") => _" + l + ";");
+                cm.AddLine("");
             }
 
             private void GenerateDbContext()
             {
                 MakeDir(generatedFolder, dbFolder);
 
-                var filename = Path.Join(config.Config.Output, generatedFolder, dbFolder, dbContextFilename + ".cs");
-                var cm = new ClassMaker(config, dbContextName, filename);
+                var fm = StartFile(dbFolder, dbContextFilename);
+                var cm = StartClass(fm, dbContextName);
+
                 cm.AddUsing("System.Collections.Generic");
                 cm.AddUsing("Microsoft.EntityFrameworkCore");
 
@@ -102,7 +206,7 @@ namespace generator
                     liner.Add("optionsBuilder.UseSqlServer(@\"" + config.Config.ConnectionString + "\");");
                 });
 
-                cm.Build();
+                fm.Build();
             }
 
             private void GenerateDtos()
@@ -111,28 +215,69 @@ namespace generator
 
                 foreach (var model in config.Models)
                 {
-                    var filename = Path.Join(config.Config.Output, generatedFolder, dtoFolder, model.Name + ".cs");
-                    var cm = new ClassMaker(config, model.Name, filename);
+                    var fm = StartFile(dtoFolder, model.Name);
+                    var cm = StartClass(fm, model.Name);
+
                     cm.AddUsing("System.Collections.Generic");
 
                     cm.AddProperty(config.Config.IdType, "Id");
-                    foreach (var f in model.Fields)
-                    {
-                        cm.AddProperty(f.Type, f.Name);
-                    }
+                    AddModelFields(cm, model);
+
                     if (model.HasMany != null) foreach (var m in model.HasMany)
                     {
                         cm.AddProperty("List<" + m + ">", m + "s");
                     }
-                    var foreignProperties = GetForeignProperties(model, config);
-                    foreach (var f in foreignProperties)
-                    {
-                        cm.AddProperty(config.Config.IdType, f + "Id");
-                        cm.AddProperty(f, f);
-                    }
+                    AddForeignProperties(cm, model);
 
-                    cm.Build();
+                    fm.Build();
                 }
+            }
+
+            private void AddModelFields(ClassMaker cm, GeneratorConfig.ModelConfig model)
+            {
+                foreach (var f in model.Fields)
+                {
+                    cm.AddProperty(f.Type, f.Name);
+                }
+            }
+
+            private void AddForeignProperties(ClassMaker cm, GeneratorConfig.ModelConfig model, bool idOnly = false)
+            {
+                var foreignProperties = GetForeignProperties(model, config);
+                foreach (var f in foreignProperties)
+                {
+                    cm.AddProperty(config.Config.IdType, f + "Id");
+                    if (!idOnly) cm.AddProperty(f, f);
+                }
+            }
+
+            private void AddModelFieldsAsNullable(ClassMaker cm, GeneratorConfig.ModelConfig model)
+            {
+                foreach (var f in model.Fields)
+                {
+                    cm.AddNullableProperty(f.Type, f.Name);
+                }
+            }
+
+            private void AddForeignPropertiesAsNullable(ClassMaker cm, GeneratorConfig.ModelConfig model, bool idOnly = false)
+            {
+                var foreignProperties = GetForeignProperties(model, config);
+                foreach (var f in foreignProperties)
+                {
+                    cm.AddNullableProperty(config.Config.IdType, f + "Id");
+                    if (!idOnly) cm.AddNullableProperty(f, f);
+                }
+            }
+
+            private FileMaker StartFile(string subfolder, string filename)
+            {
+                var f = Path.Join(config.Config.Output, generatedFolder, subfolder, filename + ".cs");
+                return new FileMaker(config, f);
+            }
+
+            private ClassMaker StartClass(FileMaker fm, string className)
+            {
+                return fm.AddClass(className);
             }
 
             private void MakeDir(params string[] path)

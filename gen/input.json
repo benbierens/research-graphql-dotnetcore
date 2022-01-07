@@ -17,8 +17,7 @@
                     "name": "Age",
                     "type": "int"
                 }
-            ],
-            "relations": []
+            ]
         },
         {
             "name": "Couch",

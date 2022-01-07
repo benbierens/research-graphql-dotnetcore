@@ -5,8 +5,9 @@ namespace graphql_web
 {
     public class Query
     {
-        public Cat[] Cats()
+        public async Task<Cat[]> Cats()
         {
+            await Task.Run(() => { });
             return Data.Instance.Model.Cats;
         }
 

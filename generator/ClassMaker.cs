@@ -1,27 +1,43 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 public class ClassMaker
 {
     private readonly GeneratorConfig config;
-    private readonly string classname;
-    private readonly string filename;
+    private readonly string className;
     private readonly List<string> lines = new List<string>();
     private readonly List<string> inherrit = new List<string>();
     private readonly List<string> usings = new List<string>();
 
-    public ClassMaker(GeneratorConfig config, string classname, string filename)
+    public ClassMaker(GeneratorConfig config, string className)
     {
         this.config = config;
-        this.classname = classname;
-        this.filename = filename;
+        this.className = className;
+    }
+
+    public void AddLine(string line)
+    {
+        lines.Add(line);
     }
 
     public void AddProperty(string type, string name)
     {
         lines.Add("public " + type + " " + name + " { get; set; }");
+    }
+
+    public void AddNullableProperty(string type, string name)
+    {
+        if (!usings.Contains("System")) usings.Add("System");
+
+        if (IsNullableRequiredForType(type))
+        {
+            lines.Add("public Nullable<" + type + "> " + name + " { get; set; }");
+        }
+        else
+        {
+            AddProperty(type, name);
+        }
     }
 
     public void AddInherrit(string name)
@@ -44,28 +60,16 @@ public class ClassMaker
         lines.AddRange(liner.GetLines());
     }
 
-    public void Build()
+    public string[] GetUsings()
     {
-        var liner = new Liner();
-        foreach (var u in usings)
-        {
-            liner.Add("using " + EndStatement(u));
-        }
-        liner.Add("");
-
-        liner.StartClosure("namespace " + config.Config.GenerateNamespace);
-        liner.StartClosure("public class " + classname + GetInherritTag());
-        foreach (var line in lines) liner.Add(line);
-        liner.EndClosure();
-        liner.EndClosure();
-
-        liner.Write(filename);
+        return usings.ToArray();
     }
 
-    private string EndStatement(string s)
+    public void Write(Liner liner)
     {
-        if (s.EndsWith(";")) return s;
-        return s + ";";
+        liner.StartClosure("public class " + className + GetInherritTag());
+        foreach (var line in lines) liner.Add(line);
+        liner.EndClosure();
     }
 
     private string GetInherritTag()
@@ -74,52 +78,8 @@ public class ClassMaker
         return " : " + string.Join(", ", inherrit);
     }
 
-    public class Liner
+    private bool IsNullableRequiredForType(string type)
     {
-        private readonly List<string> lines = new List<string>();
-        private int indent = 0;
-
-        public void Indent()
-        {
-            indent++;
-        }
-
-        public void Deindent()
-        {
-            indent--;
-        }
-
-        public void StartClosure(string name)
-        {
-            Add(name);
-            Add("{");
-            Indent();
-        }
-
-        public void EndClosure()
-        {
-            Deindent();
-            Add("}");
-            Add("");
-        }
-
-        public void Add(string l)
-        {
-            var line = "";
-            for (var i = 0; i < indent; i++) line += "   ";
-            line += l;
-            lines.Add(line);
-        }
-
-        public string[] GetLines()
-        {
-            return lines.ToArray();
-        }
-
-        public void Write(string filename)
-        {
-            File.WriteAllLines(filename, lines);
-        }
+        return type == "int" || type == "bool";
     }
-
 }
