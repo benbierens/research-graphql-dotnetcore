@@ -1,0 +1,32 @@
+{
+    "config": {
+        "connectionString": "Server=(localdb)\\mssqllocaldb;Database=Blogging;Trusted_Connection=True",
+        "generate-namespace": "gqldemo_generated"
+    },
+    "models": [
+        {
+            "name": "Cat",
+            "fields": [
+                {
+                    "name": "Name",
+                    "type": "string"
+                },
+                {
+                    "name": "Age",
+                    "type": "int"
+                }
+            ],
+            "relations": []
+        },
+        {
+            "name": "Couch",
+            "fields": [
+                {
+                    "name": "Location",
+                    "type": "string"
+                }
+            ],
+            "hasMany": ["Cat"]
+        }
+    ]
+}
