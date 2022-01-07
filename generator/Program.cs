@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -17,10 +18,28 @@ namespace generator
         public class Generator
         {
             private readonly GeneratorConfig config;
+            private readonly string[] packages = new [] {
+                "Microsoft.EntityFrameworkCore --version 5.0.13",
+                "Microsoft.EntityFrameworkCore.SqlServer --version 5.0.13",
+                "HotChocolate.AspNetCore",
+                "HotChocolate.AspNetCore.Subscriptions",
+                "HotChocolate.Subscriptions",
+                "HotChocolate.Subscriptions.InMemory",
+            };
+            private const string generatedFolder = "generated";
             private const string dtoFolder = "dto";
+
             private const string dbFolder = "db";
             private const string dbContextName = "DatabaseContext";
             private const string dbContextFilename = "DatabaseContext";
+
+            private const string gqlFolder = "gql";
+            private const string gqlQueriesName = "Queries";
+            private const string gqlQueriesNameFilename = "Queries";
+            private const string gqlMutationsName = "Mutations";
+            private const string gqlMutationsNameFilename = "Mutations";
+            private const string gqlSubscriptionsName = "Subscriptions";
+            private const string gqlSubscriptionsNameFilename = "Subscriptions";
 
             public Generator(GeneratorConfig config)
             {
@@ -31,16 +50,42 @@ namespace generator
             {
                 MakeDir();
 
-                GenerateDtos();
+                CreateDotnetProject();
 
+                MakeDir(generatedFolder);
+                GenerateDtos();
                 GenerateDbContext();
+                GenerateGraphQl();
+            }
+
+            private void CreateDotnetProject()
+            {
+                RunCommand("dotnet", "new", "webapi");
+
+                foreach (var p in packages)
+                {
+                    RunCommand("dotnet", "add", "package", p);
+                }
+
+                RunCommand("dotnet", "tool", "install", "--global", "dotnet-ef");
+            }
+
+            private void GenerateGraphQl()
+            {
+                MakeDir(generatedFolder, gqlFolder);
+                GenerateQueries();
+            }
+
+            private void GenerateQueries()
+            {
+                //asasasa1
             }
 
             private void GenerateDbContext()
             {
-                MakeDir(dbFolder);
+                MakeDir(generatedFolder, dbFolder);
 
-                var filename = Path.Join(config.Config.Output, dbFolder, dbContextFilename + ".cs");
+                var filename = Path.Join(config.Config.Output, generatedFolder, dbFolder, dbContextFilename + ".cs");
                 var cm = new ClassMaker(config, dbContextName, filename);
                 cm.AddUsing("System.Collections.Generic");
                 cm.AddUsing("Microsoft.EntityFrameworkCore");
@@ -62,11 +107,11 @@ namespace generator
 
             private void GenerateDtos()
             {
-                MakeDir(dtoFolder);
+                MakeDir(generatedFolder, dtoFolder);
 
                 foreach (var model in config.Models)
                 {
-                    var filename = Path.Join(config.Config.Output, dtoFolder, model.Name + ".cs");
+                    var filename = Path.Join(config.Config.Output, generatedFolder, dtoFolder, model.Name + ".cs");
                     var cm = new ClassMaker(config, model.Name, filename);
                     cm.AddUsing("System.Collections.Generic");
 
@@ -100,6 +145,16 @@ namespace generator
                 }
             }
         
+            private void RunCommand(string cmd, params string[] args)
+            {
+                var info = new ProcessStartInfo();
+                info.Arguments = string.Join(" ", args);
+                info.FileName = cmd;
+                info.WorkingDirectory = config.Config.Output;
+                var p = Process.Start(info);
+                p.WaitForExit();
+            }
+
             private string[] GetForeignProperties(GeneratorConfig.ModelConfig model, GeneratorConfig config)
             {
                 return config.Models.Where(m => m.HasMany != null && m.HasMany.Contains(model.Name)).Select(m => m.Name).ToArray();

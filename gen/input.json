@@ -2,7 +2,7 @@
     "config": {
         "connectionString": "Server=(localdb)\\mssqllocaldb;Database=Blogging;Trusted_Connection=True",
         "generateNamespace": "gqldemo_generated",
-        "output": "../generated",
+        "output": "../demo",
         "idType": "int"
     },
     "models": [
