@@ -1,9 +1,46 @@
 {
     "config": {
-        "connectionString": "Server=(localdb)\\mssqllocaldb;Database=Blogging;Trusted_Connection=True",
         "generateNamespace": "gqldemo_generated",
-        "output": "../demo",
-        "idType": "int"
+        "idType": "int",
+        "packages": [
+            "Microsoft.EntityFrameworkCore --version 5.0.13",
+            "Microsoft.EntityFrameworkCore.SqlServer --version 5.0.13",
+            "HotChocolate.AspNetCore",
+            "HotChocolate.AspNetCore.Subscriptions",
+            "HotChocolate.Subscriptions",
+            "HotChocolate.Subscriptions.InMemory"
+        ],
+        "output": {
+            "projectRoot": "../demo",
+            "generatedFolder": "generated",
+            "dtoSubFolder": "dto",
+            "databaseSubFolder": "db",
+            "graphQlSubFolder": "gql"
+        },
+        "Database": {
+            "connectionString": "Server=(localdb)\\mssqllocaldb;Database=Blogging;Trusted_Connection=True",
+            "dbContextClassName": "DatabaseContext",
+            "dbContextFileName": "DatabaseContext"
+        },
+        "GraphQl": {
+            "gqlTypesFileName": "GraphQlTypes",
+            "gqlQueriesClassName": "Queries",
+            "gqlQueriesFileName": "Queries",
+
+            "gqlMutationsClassName": "Mutations",
+            "gqlMutationsFilename": "Mutations",
+            "gqlMutationsInputTypePostfix": "Input",
+            "gqlMutationsCreateMethod": "Create",
+            "gqlMutationsUpdateMethod": "Update",
+            "gqlMutationsDeleteMethod": "Delete",
+
+            "gqlSubscriptionsClassName": "Subscriptions",
+            "gqlSubscriptionsFilename": "Subscriptions",
+            "gqlSubscriptionCreatedMethod": "Created",
+            "gqlSubscriptionUpdatedMethod": "Updated",
+            "gqlSubscriptionDeletedMethod": "Deleted"
+        }
+
     },
     "models": [
         {

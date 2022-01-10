@@ -4,15 +4,13 @@ using System.Linq;
 
 public class ClassMaker
 {
-    private readonly GeneratorConfig config;
     private readonly string className;
     private readonly List<string> lines = new List<string>();
     private readonly List<string> inherrit = new List<string>();
     private readonly List<string> usings = new List<string>();
 
-    public ClassMaker(GeneratorConfig config, string className)
+    public ClassMaker(string className)
     {
-        this.config = config;
         this.className = className;
     }
 

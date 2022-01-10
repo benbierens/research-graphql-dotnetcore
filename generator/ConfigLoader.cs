@@ -16,7 +16,7 @@ public class ConfigLoader
 
     private GeneratorConfig TryParse(string filename)
     {
-        try 
+        try
         {
             if (!File.Exists(filename)) return null;
             var lines = File.ReadAllLines(filename);
@@ -33,25 +33,63 @@ public class GeneratorConfig
 {
     public class ConfigSection
     {
-        public string ConnectionString {get;set;}
-        public string GenerateNamespace {get;set;}
-        public string Output {get;set;}
-        public string IdType {get;set;}
+        public string GenerateNamespace { get; set; }
+        public ConfigOutputSection Output { get; set; }
+        public ConfigDatabaseSection Database { get; set; }
+        public ConfigGraphQlSection GraphQl { get; set; }
+        public string IdType { get; set; }
+        public string[] Packages { get; set; }
     }
-    
+
+    public class ConfigOutputSection
+    {
+        public string ProjectRoot { get; set; }
+        public string GeneratedFolder { get; set; }
+        public string DtoSubFolder { get; set; }
+        public string DatabaseSubFolder { get; set; }
+        public string GraphQlSubFolder { get; set; }
+    }
+
+    public class ConfigDatabaseSection
+    {
+        public string ConnectionString { get; set; }
+        public string DbContextClassName { get; set; }
+        public string DbContextFileName { get; set; }
+    }
+
+    public class ConfigGraphQlSection
+    {
+        public string GqlTypesFileName { get; set; }
+        public string GqlQueriesClassName { get; set; }
+        public string GqlQueriesFileName { get; set; }
+
+        public string GqlMutationsClassName { get; set; }
+        public string GqlMutationsFilename { get; set; }
+        public string GqlMutationsInputTypePostfix { get; set; }
+        public string GqlMutationsCreateMethod { get; set; }
+        public string GqlMutationsUpdateMethod { get; set; }
+        public string GqlMutationsDeleteMethod { get; set; }
+
+        public string GqlSubscriptionsClassName { get; set; }
+        public string GqlSubscriptionsFilename { get; set; }
+        public string GqlSubscriptionCreatedMethod { get; set; }
+        public string GqlSubscriptionUpdatedMethod { get; set; }
+        public string GqlSubscriptionDeletedMethod { get; set; }
+    }
+
     public class ModelConfig
     {
-        public string Name {get;set;}
-        public ModelField[] Fields {get;set;}
-        public string[] HasMany {get;set;}
+        public string Name { get; set; }
+        public ModelField[] Fields { get; set; }
+        public string[] HasMany { get; set; }
     }
 
     public class ModelField
     {
-        public string Name {get;set;}
-        public string Type {get;set;}
+        public string Name { get; set; }
+        public string Type { get; set; }
     }
 
-    public ConfigSection Config {get;set;}
-    public ModelConfig[] Models {get;set;}
+    public ConfigSection Config { get; set; }
+    public ModelConfig[] Models { get; set; }
 }
