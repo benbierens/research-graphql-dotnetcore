@@ -29,6 +29,8 @@ public class FileMaker
             liner.Add("using " + EndStatement(u));
         }
         liner.Add("");
+        liner.Add("// This file is generated.");
+        liner.Add("");
 
         liner.StartClosure("namespace " + config.Config.GenerateNamespace);
         

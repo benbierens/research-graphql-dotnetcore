@@ -67,7 +67,7 @@ public class ClassMaker
 
     public void Write(Liner liner)
     {
-        liner.StartClosure("public class " + className + GetInherritTag());
+        liner.StartClosure("public partial class " + className + GetInherritTag());
         foreach (var line in lines) liner.Add(line);
         liner.EndClosure();
     }

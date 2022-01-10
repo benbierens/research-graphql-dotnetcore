@@ -166,6 +166,7 @@ namespace generator
 
                     AddCreateMutation(cm, model, inputTypeNames);
                     AddUpdateMutation(cm, model, inputTypeNames);
+                    AddDeleteMutation(cm, model, inputTypeNames);
                 }
 
                 fm.Build();
@@ -176,14 +177,14 @@ namespace generator
             {
                 cm.AddClosure("public async Task<" + model.Name + "> " + gqlMutationsCreateMethod + model.Name +
                 "(" + inputTypeNames.Create + " input, [Service] ITopicEventSender sender)", liner => {
-                    liner.StartClosure("var createdEntity = new " + model.Name);
+                    liner.StartClosure("var createEntity = new " + model.Name);
                     AddModelInitializer(liner, model, "input");
                     liner.EndClosure(";");
 
                     AddDatabaseAddAndSave(liner);
 
-                    liner.Add("await sender.SendAsync(\"" + model.Name + gqlSubscriptionCreatedMethod + "\", createdEntity);");
-                    liner.Add("return createdEntity;");
+                    liner.Add("await sender.SendAsync(\"" + model.Name + gqlSubscriptionCreatedMethod + "\", createEntity);");
+                    liner.Add("return createEntity;");
                 });
             }
 
@@ -191,16 +192,33 @@ namespace generator
             {
                 cm.AddClosure("public async Task<" + model.Name + "> " + gqlMutationsUpdateMethod + model.Name +
                 "(" + inputTypeNames.Update + " input, [Service] ITopicEventSender sender)", liner => {
-                    liner.Add(model.Name + " entity = null;");
+                    liner.Add(model.Name + " updateEntity = null;");
 
                     liner.StartClosure("using (var db = new DatabaseContext())");
-                    liner.Add("entity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
+                    liner.Add("updateEntity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
                     AddModelUpdater(liner, model, "input");
                     liner.Add("db.SaveChanges();");
                     liner.EndClosure();
 
-                    liner.Add("await sender.SendAsync(\"" + model.Name + gqlSubscriptionUpdatedMethod + "\", entity);");
-                    liner.Add("return entity;");
+                    liner.Add("await sender.SendAsync(\"" + model.Name + gqlSubscriptionUpdatedMethod + "\", updateEntity);");
+                    liner.Add("return updateEntity;");
+                });
+            }
+
+            private void AddDeleteMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
+            {
+                cm.AddClosure("public async Task<" + model.Name + "> " + gqlMutationsDeleteMethod + model.Name +
+                "(" + inputTypeNames.Delete + " input, [Service] ITopicEventSender sender)", liner => {
+                    liner.Add(model.Name + " deleteEntity = null;");
+
+                    liner.StartClosure("using (var db = new DatabaseContext())");
+                    liner.Add("deleteEntity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
+                    liner.Add("db.Remove(deleteEntity);");
+                    liner.Add("db.SaveChanges();");
+                    liner.EndClosure();
+
+                    liner.Add("await sender.SendAsync(\"" + model.Name + gqlSubscriptionDeletedMethod + "\", deleteEntity);");
+                    liner.Add("return deleteEntity;");
                 });
             }
 
@@ -220,7 +238,7 @@ namespace generator
             private void AddDatabaseAddAndSave(Liner liner)
             {
                 liner.StartClosure("using (var db = new DatabaseContext())");
-                liner.Add("db.Add(createdEntity);");
+                liner.Add("db.Add(createEntity);");
                 liner.Add("db.SaveChanges();");
                 liner.EndClosure();
             }
@@ -242,11 +260,11 @@ namespace generator
             {
                 if (Nullability.IsNullableRequiredForType(type))
                 {
-                    liner.Add("if (" + inputName + "." + fieldName + ".HasValue) entity." + fieldName + " = " + inputName + "." + fieldName + ".Value;");
+                    liner.Add("if (" + inputName + "." + fieldName + ".HasValue) updateEntity." + fieldName + " = " + inputName + "." + fieldName + ".Value;");
                 }
                 else 
                 {
-                    liner.Add("if (" + inputName + "." + fieldName + " != null) entity." + fieldName + " = " + inputName + "." + fieldName + ";");
+                    liner.Add("if (" + inputName + "." + fieldName + " != null) updateEntity." + fieldName + " = " + inputName + "." + fieldName + ";");
                 }
             }
 
