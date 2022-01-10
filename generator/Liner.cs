@@ -23,17 +23,17 @@ public class Liner
         Indent();
     }
 
-    public void EndClosure()
+    public void EndClosure(string additionalPostfix = "")
     {
         Deindent();
-        Add("}");
+        Add("}" + additionalPostfix);
         Add("");
     }
 
     public void Add(string l)
     {
         var line = "";
-        for (var i = 0; i < indent; i++) line += "   ";
+        for (var i = 0; i < indent; i++) line += "    ";
         line += l;
         lines.Add(line);
     }

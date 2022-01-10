@@ -134,15 +134,18 @@ namespace generator
 
                 foreach (var model in config.Models)
                 {
-                    var addClass = StartClass(fm, gqlMutationsCreateMethod + model.Name + gqlMutationsInputTypePostfix);
+                    var inputTypeNames = GetInputTypeNames(model);
+
+                    var addClass = StartClass(fm, inputTypeNames.Create);
                     AddModelFields(addClass, model);
                     AddForeignProperties(addClass, model, true);
                     
-                    var updateClass = StartClass(fm, gqlMutationsUpdateMethod + model.Name + gqlMutationsInputTypePostfix);
+                    var updateClass = StartClass(fm, inputTypeNames.Update);
+                    updateClass.AddProperty(config.Config.IdType, model.Name + "Id");
                     AddModelFieldsAsNullable(updateClass, model);
                     AddForeignPropertiesAsNullable(updateClass, model, true);
 
-                    var deleteClass = StartClass(fm, gqlMutationsDeleteMethod + model.Name + gqlMutationsInputTypePostfix);
+                    var deleteClass = StartClass(fm, inputTypeNames.Delete);
                     deleteClass.AddProperty(config.Config.IdType, model.Name + "Id");
                 }
 
@@ -151,15 +154,6 @@ namespace generator
 
             private void GenerateMutations()
             {
-        // public async Task<Cat> MoveCat(MoveCatInput input, [Service] ITopicEventSender sender)
-        // {
-        //     var result = Data.Instance.MoveCat(input.CatIndex, input.CouchIndex);
-
-        //     await sender.SendAsync("OnCatChanged", result);
-
-        //     return result;
-        // }
-
                 var fm = StartFile(gqlFolder, gqlMutationsNameFilename);
                 var cm = StartClass(fm, gqlMutationsName);
                 cm.AddUsing("System.Threading.Tasks");
@@ -168,11 +162,92 @@ namespace generator
 
                 foreach (var model in config.Models)
                 {
-                    create method, update method, delete method.
+                    var inputTypeNames = GetInputTypeNames(model);
+
+                    AddCreateMutation(cm, model, inputTypeNames);
+                    AddUpdateMutation(cm, model, inputTypeNames);
                 }
 
                 fm.Build();
 
+            }
+
+            private void AddCreateMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
+            {
+                cm.AddClosure("public async Task<" + model.Name + "> " + gqlMutationsCreateMethod + model.Name +
+                "(" + inputTypeNames.Create + " input, [Service] ITopicEventSender sender)", liner => {
+                    liner.StartClosure("var createdEntity = new " + model.Name);
+                    AddModelInitializer(liner, model, "input");
+                    liner.EndClosure(";");
+
+                    AddDatabaseAddAndSave(liner);
+
+                    liner.Add("await sender.SendAsync(\"" + model.Name + gqlSubscriptionCreatedMethod + "\", createdEntity);");
+                    liner.Add("return createdEntity;");
+                });
+            }
+
+            private void AddUpdateMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
+            {
+                cm.AddClosure("public async Task<" + model.Name + "> " + gqlMutationsUpdateMethod + model.Name +
+                "(" + inputTypeNames.Update + " input, [Service] ITopicEventSender sender)", liner => {
+                    liner.Add(model.Name + " entity = null;");
+
+                    liner.StartClosure("using (var db = new DatabaseContext())");
+                    liner.Add("entity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
+                    AddModelUpdater(liner, model, "input");
+                    liner.Add("db.SaveChanges();");
+                    liner.EndClosure();
+
+                    liner.Add("await sender.SendAsync(\"" + model.Name + gqlSubscriptionUpdatedMethod + "\", entity);");
+                    liner.Add("return entity;");
+                });
+            }
+
+            private void AddModelInitializer(Liner liner, GeneratorConfig.ModelConfig model, string inputName)
+            {
+                foreach (var field in model.Fields)
+                {
+                    liner.Add(field.Name + " = " + inputName + "." + field.Name + ",");
+                }
+                var foreignProperties = GetForeignProperties(model, config);
+                foreach (var f in foreignProperties)
+                {
+                    liner.Add(f + "Id = " + inputName + "." + f + "Id,");
+                }
+            }
+
+            private void AddDatabaseAddAndSave(Liner liner)
+            {
+                liner.StartClosure("using (var db = new DatabaseContext())");
+                liner.Add("db.Add(createdEntity);");
+                liner.Add("db.SaveChanges();");
+                liner.EndClosure();
+            }
+
+            private void AddModelUpdater(Liner liner, GeneratorConfig.ModelConfig model, string inputName)
+            {
+                foreach (var field in model.Fields)
+                {
+                    AddAssignmentLine(liner, field.Type, field.Name, inputName);
+                }
+                var foreignProperties = GetForeignProperties(model, config);
+                foreach (var f in foreignProperties)
+                {
+                    AddAssignmentLine(liner, config.Config.IdType, f + "Id", inputName);
+                }
+            }
+
+            private void AddAssignmentLine(Liner liner, string type, string fieldName, string inputName)
+            {
+                if (Nullability.IsNullableRequiredForType(type))
+                {
+                    liner.Add("if (" + inputName + "." + fieldName + ".HasValue) entity." + fieldName + " = " + inputName + "." + fieldName + ".Value;");
+                }
+                else 
+                {
+                    liner.Add("if (" + inputName + "." + fieldName + " != null) entity." + fieldName + " = " + inputName + "." + fieldName + ";");
+                }
             }
 
             private void AddSubscriptionMethod(ClassMaker cm, string modelName, string method)
@@ -290,6 +365,16 @@ namespace generator
                 }
             }
         
+            private InputTypeNames GetInputTypeNames(GeneratorConfig.ModelConfig model)
+            {
+                return new InputTypeNames
+                {
+                    Create = gqlMutationsCreateMethod + model.Name + gqlMutationsInputTypePostfix,
+                    Update = gqlMutationsUpdateMethod + model.Name + gqlMutationsInputTypePostfix,
+                    Delete = gqlMutationsDeleteMethod + model.Name + gqlMutationsInputTypePostfix
+                };
+            }
+
             private void RunCommand(string cmd, params string[] args)
             {
                 var info = new ProcessStartInfo();
@@ -303,6 +388,13 @@ namespace generator
             private string[] GetForeignProperties(GeneratorConfig.ModelConfig model, GeneratorConfig config)
             {
                 return config.Models.Where(m => m.HasMany != null && m.HasMany.Contains(model.Name)).Select(m => m.Name).ToArray();
+            }
+
+            private class InputTypeNames
+            {
+                public string Create { get; set; }
+                public string Update { get; set; }
+                public string Delete { get; set; }
             }
         }
     }

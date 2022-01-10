@@ -30,7 +30,7 @@ public class ClassMaker
     {
         if (!usings.Contains("System")) usings.Add("System");
 
-        if (IsNullableRequiredForType(type))
+        if (Nullability.IsNullableRequiredForType(type))
         {
             lines.Add("public Nullable<" + type + "> " + name + " { get; set; }");
         }
@@ -76,10 +76,5 @@ public class ClassMaker
     {
         if (!inherrit.Any()) return "";
         return " : " + string.Join(", ", inherrit);
-    }
-
-    private bool IsNullableRequiredForType(string type)
-    {
-        return type == "int" || type == "bool";
     }
 }
