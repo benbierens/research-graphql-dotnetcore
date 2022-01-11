@@ -7,7 +7,7 @@ public class GraphQlGenerator : BaseGenerator
 
     public void GenerateGraphQl()
     {
-        MakeDir(Config.Output.GeneratedFolder, Config.Output.GraphQlSubFolder);
+        MakeSrcDir(Config.Output.GeneratedFolder, Config.Output.GraphQlSubFolder);
         GenerateQueries();
         GenerateSubscriptions();
         GenerateTypes();
@@ -16,7 +16,7 @@ public class GraphQlGenerator : BaseGenerator
 
     private void GenerateQueries()
     {
-        var fm = StartFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlQueriesFileName);
+        var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlQueriesFileName);
         var cm = StartClass(fm, Config.GraphQl.GqlQueriesClassName);
         cm.AddUsing("System.Threading.Tasks");
         cm.AddUsing("Microsoft.EntityFrameworkCore");
@@ -34,7 +34,7 @@ public class GraphQlGenerator : BaseGenerator
 
     private void GenerateSubscriptions()
     {
-        var fm = StartFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlSubscriptionsFilename);
+        var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlSubscriptionsFilename);
         var cm = StartClass(fm, Config.GraphQl.GqlSubscriptionsClassName);
         cm.AddUsing("HotChocolate");
         cm.AddUsing("HotChocolate.Subscriptions");
@@ -52,7 +52,7 @@ public class GraphQlGenerator : BaseGenerator
 
     private void GenerateTypes()
     {
-        var fm = StartFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlTypesFileName);
+        var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlTypesFileName);
 
         foreach (var model in Models)
         {
@@ -76,7 +76,7 @@ public class GraphQlGenerator : BaseGenerator
 
     private void GenerateMutations()
     {
-        var fm = StartFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlMutationsFilename);
+        var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlMutationsFilename);
         var cm = StartClass(fm, Config.GraphQl.GqlMutationsClassName);
         cm.AddUsing("System.Threading.Tasks");
         cm.AddUsing("HotChocolate");

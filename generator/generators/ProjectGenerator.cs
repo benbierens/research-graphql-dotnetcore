@@ -8,19 +8,25 @@ public class ProjectGenerator : BaseGenerator
     public void CreateDotNetProject()
     {
         RunCommand("dotnet", "new", "-i", "HotChocolate.Templates.Server");
-        RunCommand("dotnet", "new", "graphql");
+        RunCommand("dotnet", "new", "sln");
+        RunCommand("dotnet", "new", "graphql", "-o", Config.Output.SourceFolder);
 
         foreach (var p in Config.Packages)
         {
-            RunCommand("dotnet", "add", "package", p);
+            RunCommand("dotnet", "add", Config.Output.SourceFolder, "package", p);
         }
+
+        RunCommand("dotnet", "new", "nunit", "-o", Config.Output.TestFolder);
+        RunCommand("dotnet", "sln", "add", Config.Output.SourceFolder + "/" + Config.Output.SourceFolder + ".csproj");
+        RunCommand("dotnet", "sln", "add", Config.Output.TestFolder + "/" + Config.Output.TestFolder + ".csproj");
+        RunCommand("dotnet", "add", Config.Output.TestFolder, "reference", Config.Output.SourceFolder + "/" + Config.Output.SourceFolder + ".csproj");
 
         RunCommand("dotnet", "tool", "install", "--global", "dotnet-ef");
     }
 
     public void ModifyDefaultFiles()
     {
-        var mf = ModifyFile("", "Startup");
+        var mf = ModifyFile(Config.Output.SourceFolder, "Startup");
         mf.AddUsing(Config.GenerateNamespace);
         mf.AddUsing("HotChocolate.AspNetCore");
 

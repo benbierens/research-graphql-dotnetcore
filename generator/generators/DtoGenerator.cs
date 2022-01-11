@@ -7,11 +7,11 @@ public class DtoGenerator : BaseGenerator
 
     public void GenerateDtos()
     {
-        MakeDir(Config.Output.GeneratedFolder, Config.Output.DtoSubFolder);
+        MakeSrcDir(Config.Output.GeneratedFolder, Config.Output.DtoSubFolder);
 
         foreach (var model in Models)
         {
-            var fm = StartFile(Config.Output.DtoSubFolder, model.Name);
+            var fm = StartSrcFile(Config.Output.DtoSubFolder, model.Name);
             var cm = StartClass(fm, model.Name);
 
             cm.AddUsing("System.Collections.Generic");

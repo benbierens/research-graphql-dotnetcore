@@ -44,6 +44,8 @@ public class GeneratorConfig
     public class ConfigOutputSection
     {
         public string ProjectRoot { get; set; }
+        public string SourceFolder { get; set; }
+        public string TestFolder { get; set; }
         public string GeneratedFolder { get; set; }
         public string DtoSubFolder { get; set; }
         public string DatabaseSubFolder { get; set; }

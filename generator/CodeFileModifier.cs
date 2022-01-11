@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-public class FileModifier
+public class CodeFileModifier
 {
     private readonly string filename;
     private readonly List<string> lines;
 
-    public FileModifier(string filename)
+    public CodeFileModifier(string filename)
     {
         this.filename = filename;
 

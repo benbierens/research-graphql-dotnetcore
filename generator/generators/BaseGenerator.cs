@@ -13,21 +13,27 @@ public class BaseGenerator
     public GeneratorConfig.ConfigSection Config { get; private set; }
     public GeneratorConfig.ModelConfig[] Models { get; private set; }
 
-    public FileMaker StartFile(string subfolder, string filename)
+    public FileMaker StartSrcFile(string subfolder, string filename)
     {
-        var f = Path.Join(Config.Output.ProjectRoot, Config.Output.GeneratedFolder, subfolder, filename + ".cs");
+        var f = Path.Join(Config.Output.ProjectRoot, Config.Output.SourceFolder, Config.Output.GeneratedFolder, subfolder, filename + ".cs");
         return new FileMaker(Config, f);
     }
 
-    public FileModifier ModifyFile(string filename)
+    public FileMaker StartTestFile(string subfolder, string filename)
+    {
+        var f = Path.Join(Config.Output.ProjectRoot, Config.Output.TestFolder, subfolder, filename + ".cs");
+        return new FileMaker(Config, f);
+    }
+
+    public CodeFileModifier ModifyFile(string filename)
     {
         return ModifyFile("", filename);
     }
 
-    public FileModifier ModifyFile(string subfolder, string filename)
+    public CodeFileModifier ModifyFile(string subfolder, string filename)
     {
         var f = Path.Join(Config.Output.ProjectRoot, subfolder, filename + ".cs");
-        return new FileModifier(f);
+        return new CodeFileModifier(f);
     }
 
     public ClassMaker StartClass(FileMaker fm, string className)
@@ -35,7 +41,7 @@ public class BaseGenerator
         return fm.AddClass(className);
     }
 
-    public void MakeDir(params string[] path)
+    public void MakeDirA(params string[] path)
     {
         var arr = new[] { Config.Output.ProjectRoot }.Concat(path).ToArray();
         var p = Path.Join(arr);
@@ -43,6 +49,18 @@ public class BaseGenerator
         {
             Directory.CreateDirectory(p);
         }
+    }
+
+    public void MakeSrcDir(params string[] path)
+    {
+        var arr = new[] { Config.Output.SourceFolder }.Concat(path).ToArray();
+        MakeDirA(arr);
+    }
+
+    public void MakeTestDir(params string[] path)
+    {
+        var arr = new[] { Config.Output.TestFolder }.Concat(path).ToArray();
+        MakeDirA(arr);
     }
     
     public string[] GetForeignProperties(GeneratorConfig.ModelConfig model)

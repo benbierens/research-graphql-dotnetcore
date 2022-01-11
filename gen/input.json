@@ -16,6 +16,8 @@
         ],
         "output": {
             "projectRoot": "../demo",
+            "sourceFolder": "src",
+            "testFolder": "test",
             "generatedFolder": "generated",
             "dtoSubFolder": "dto",
             "databaseSubFolder": "db",

@@ -17,11 +17,13 @@ public class Generator : BaseGenerator
 
     public void Generate()
     {
-        MakeDir();
+        MakeDirA();
+        MakeDirA(Config.Output.SourceFolder);
+        MakeDirA(Config.Output.TestFolder);
 
         projectGenerator.CreateDotNetProject();
 
-        MakeDir(Config.Output.GeneratedFolder);
+        MakeSrcDir(Config.Output.GeneratedFolder);
         dtoGenerator.GenerateDtos();
         databaseGenerator.GenerateDbContext();
         graphQlGenerator.GenerateGraphQl();
