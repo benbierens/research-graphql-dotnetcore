@@ -7,8 +7,9 @@
             "Microsoft.EntityFrameworkCore.SqlServer --version 5.0.13",
             "HotChocolate.AspNetCore",
             "HotChocolate.AspNetCore.Subscriptions",
+            "HotChocolate.AspNetCore.Playground",
             "HotChocolate.Subscriptions",
-            "HotChocolate.Subscriptions.InMemory"
+            "HotChocolate.Subscriptions.InMemory"            
         ],
         "output": {
             "projectRoot": "../demo",

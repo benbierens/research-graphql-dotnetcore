@@ -19,6 +19,17 @@ public class BaseGenerator
         return new FileMaker(Config, f);
     }
 
+    public FileModifier ModifyFile(string filename)
+    {
+        return ModifyFile("", filename);
+    }
+
+    public FileModifier ModifyFile(string subfolder, string filename)
+    {
+        var f = Path.Join(Config.Output.ProjectRoot, subfolder, filename + ".cs");
+        return new FileModifier(f);
+    }
+
     public ClassMaker StartClass(FileMaker fm, string className)
     {
         return fm.AddClass(className);

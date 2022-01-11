@@ -25,5 +25,9 @@ public class Generator : BaseGenerator
         dtoGenerator.GenerateDtos();
         databaseGenerator.GenerateDbContext();
         graphQlGenerator.GenerateGraphQl();
+
+        projectGenerator.ModifyDefaultFiles();
+        // generate docker file
+        // generate tests?
     }
 }
