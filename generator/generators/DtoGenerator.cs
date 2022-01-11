@@ -21,9 +21,9 @@ public class DtoGenerator : BaseGenerator
 
             if (model.HasMany != null) foreach (var m in model.HasMany)
                 {
-                    cm.AddProperty("List<" + m + ">", m + "s");
+                    cm.AddProperty("virtual List<" + m + ">", m + "s");
                 }
-            AddForeignProperties(cm, model);
+            AddForeignProperties(cm, model, "virtual ");
 
             fm.Build();
         }

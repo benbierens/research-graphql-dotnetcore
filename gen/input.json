@@ -6,6 +6,7 @@
             "Microsoft.EntityFrameworkCore --version 5.0.13",
             "Microsoft.EntityFrameworkCore.Design --version 5.0.13",
             "Microsoft.EntityFrameworkCore.SqlServer --version 5.0.13",
+            "Microsoft.EntityFrameworkCore.Proxies --version 5.0.13",
             "HotChocolate.AspNetCore",
             "HotChocolate.AspNetCore.Subscriptions",
             "HotChocolate.AspNetCore.Playground",
@@ -23,6 +24,7 @@
         "Database": {
             "connectionString": "Server=127.0.0.1;Port=5432;Database=demo;User Id=postgres;Password=admin;",
             "dbContextClassName": "DatabaseContext",
+            "DbAccesserClassName": "Db",
             "dbContextFileName": "DatabaseContext"
         },
         "GraphQl": {

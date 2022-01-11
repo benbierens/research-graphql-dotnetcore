@@ -54,6 +54,7 @@ public class GeneratorConfig
     {
         public string ConnectionString { get; set; }
         public string DbContextClassName { get; set; }
+        public string DbAccesserClassName { get; set; }
         public string DbContextFileName { get; set; }
     }
 

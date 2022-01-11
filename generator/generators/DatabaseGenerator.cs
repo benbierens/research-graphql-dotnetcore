@@ -10,6 +10,21 @@ public class DatabaseGenerator : BaseGenerator
         MakeDir(Config.Output.GeneratedFolder, Config.Output.DatabaseSubFolder);
 
         var fm = StartFile(Config.Output.DatabaseSubFolder, Config.Database.DbContextFileName);
+        AddDatabaseContextClass(fm);
+        AddStaticAccessClass(fm);
+
+        fm.Build();
+    }
+
+    public void CreateAndApplyInitialMigration()
+    {
+        RunCommand("dotnet", "ef", "database", "update");
+        RunCommand("dotnet", "ef", "migrations", "add", "initial-setup");
+        RunCommand("dotnet", "ef", "database", "update");
+    }
+
+    private void AddDatabaseContextClass(FileMaker fm)
+    {
         var cm = StartClass(fm, Config.Database.DbContextClassName);
 
         cm.AddUsing("System.Collections.Generic");
@@ -24,19 +39,28 @@ public class DatabaseGenerator : BaseGenerator
 
         cm.AddClosure("protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)", liner =>
         {
-            liner.Add("optionsBuilder.UseNpgsql(@\"" + Config.Database.ConnectionString + "\");");
+            liner.Add("optionsBuilder");
+            liner.Indent();
+            liner.Add(".UseLazyLoadingProxies()");
+            liner.Add(".UseNpgsql(@\"" + Config.Database.ConnectionString + "\");");
+            liner.Deindent();
         });
-
-        fm.Build();
     }
 
-    public void CreateAndApplyInitialMigration()
+    public void AddStaticAccessClass(FileMaker fm)
     {
-        RunCommand("dotnet", "ef", "database", "update");
-        RunCommand("dotnet", "ef", "migrations", "add", "initial-setup");
-        RunCommand("dotnet", "ef", "database", "update");
+        var contextName = "context";
+        var cm = fm.AddClass(Config.Database.DbAccesserClassName);
+        cm.Modifiers.Clear();
+        cm.Modifiers.Add("static");
+
+        cm.AddLine("private static " + Config.Database.DbContextClassName + " " + contextName + ";");
+
+        cm.AddClosure("public static " + Config.Database.DbContextClassName + " Context", liner => 
+        {
+            liner.StartClosure("get");
+            liner.Add("return new " + Config.Database.DbContextClassName + "();");
+            liner.EndClosure();
+        });
     }
 }
-
-// dotnet ef migrations add initialSetup                        
-// dotnet ef database update

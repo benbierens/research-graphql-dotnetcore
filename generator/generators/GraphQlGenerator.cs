@@ -24,11 +24,9 @@ public class GraphQlGenerator : BaseGenerator
         foreach (var model in Models)
         {
             cm.AddClosure("public async Task<" + model.Name + "[]> " + model.Name + "s()", liner =>
-             {
-                 liner.StartClosure("using (var db = new DatabaseContext())");
-                 liner.Add("return await db." + model.Name + "s.ToArrayAsync();");
-                 liner.EndClosure();
-             });
+            {
+                liner.Add("return await " + Config.Database.DbAccesserClassName + ".Context." + model.Name + "s.ToArrayAsync();");
+            });
         }
 
         fm.Build();
@@ -62,7 +60,7 @@ public class GraphQlGenerator : BaseGenerator
 
             var addClass = StartClass(fm, inputTypeNames.Create);
             AddModelFields(addClass, model);
-            AddForeignProperties(addClass, model, true);
+            AddForeignProperties(addClass, model, "", true);
 
             var updateClass = StartClass(fm, inputTypeNames.Update);
             updateClass.AddProperty(Config.IdType, model.Name + "Id");

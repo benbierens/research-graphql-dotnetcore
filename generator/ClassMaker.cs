@@ -12,6 +12,14 @@ public class ClassMaker
     public ClassMaker(string className)
     {
         this.className = className;
+
+        Modifiers = new List<string>();
+        Modifiers.Add("partial");
+    }
+
+    public List<string> Modifiers
+    {
+        get; private set;
     }
 
     public void AddLine(string line)
@@ -65,7 +73,13 @@ public class ClassMaker
 
     public void Write(Liner liner)
     {
-        liner.StartClosure("public partial class " + className + GetInherritTag());
+        Modifiers.Insert(0, "public");
+        Modifiers.Add("class");
+
+        var distinct = Modifiers.Distinct().ToArray();
+        var modifiers = string.Join(" ", distinct);
+        
+        liner.StartClosure(modifiers + " " + className + GetInherritTag());
         foreach (var line in lines) liner.Add(line);
         liner.EndClosure();
     }
