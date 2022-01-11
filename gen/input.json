@@ -4,12 +4,14 @@
         "idType": "int",
         "packages": [
             "Microsoft.EntityFrameworkCore --version 5.0.13",
+            "Microsoft.EntityFrameworkCore.Design --version 5.0.13",
             "Microsoft.EntityFrameworkCore.SqlServer --version 5.0.13",
             "HotChocolate.AspNetCore",
             "HotChocolate.AspNetCore.Subscriptions",
             "HotChocolate.AspNetCore.Playground",
             "HotChocolate.Subscriptions",
-            "HotChocolate.Subscriptions.InMemory"            
+            "HotChocolate.Subscriptions.InMemory",
+            "Npgsql.EntityFrameworkCore.PostgreSQL --version 5.0.10"
         ],
         "output": {
             "projectRoot": "../demo",
@@ -19,7 +21,7 @@
             "graphQlSubFolder": "gql"
         },
         "Database": {
-            "connectionString": "Server=(localdb)\\mssqllocaldb;Database=Blogging;Trusted_Connection=True",
+            "connectionString": "Server=127.0.0.1;Port=5432;Database=demo;User Id=postgres;Password=admin;",
             "dbContextClassName": "DatabaseContext",
             "dbContextFileName": "DatabaseContext"
         },

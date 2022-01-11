@@ -27,6 +27,7 @@ public class Generator : BaseGenerator
         graphQlGenerator.GenerateGraphQl();
 
         projectGenerator.ModifyDefaultFiles();
+        databaseGenerator.CreateAndApplyInitialMigration();
         // generate docker file
         // generate tests?
     }

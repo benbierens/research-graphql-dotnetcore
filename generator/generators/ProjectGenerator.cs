@@ -27,7 +27,9 @@ public class ProjectGenerator : BaseGenerator
         mf.ReplaceLine(".AddQueryType<Query>();",
                 ".AddQueryType<" + Config.GraphQl.GqlQueriesClassName + ">()",
                 ".AddMutationType<" + Config.GraphQl.GqlMutationsClassName + ">()",
-                ".AddSubscriptionType<" + Config.GraphQl.GqlSubscriptionsClassName + ">();");
+                ".AddSubscriptionType<" + Config.GraphQl.GqlSubscriptionsClassName + ">();",
+                "",
+                "services.AddInMemorySubscriptions();");
 
         mf.ReplaceLine("app.UseDeveloperExceptionPage();",
             "app.UsePlayground();",

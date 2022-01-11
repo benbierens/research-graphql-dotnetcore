@@ -24,9 +24,19 @@ public class DatabaseGenerator : BaseGenerator
 
         cm.AddClosure("protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)", liner =>
         {
-            liner.Add("optionsBuilder.UseSqlServer(@\"" + Config.Database.ConnectionString + "\");");
+            liner.Add("optionsBuilder.UseNpgsql(@\"" + Config.Database.ConnectionString + "\");");
         });
 
         fm.Build();
     }
+
+    public void CreateAndApplyInitialMigration()
+    {
+        RunCommand("dotnet", "ef", "database", "update");
+        RunCommand("dotnet", "ef", "migrations", "add", "initial-setup");
+        RunCommand("dotnet", "ef", "database", "update");
+    }
 }
+
+// dotnet ef migrations add initialSetup                        
+// dotnet ef database update
