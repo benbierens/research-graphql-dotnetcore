@@ -54,10 +54,14 @@ public class GeneratorConfig
 
     public class ConfigDatabaseSection
     {
+        public string DbName { get; set; }
+        public string DbUsername { get; set; }
         public string ConnectionString { get; set; }
         public string DbContextClassName { get; set; }
         public string DbAccesserClassName { get; set; }
         public string DbContextFileName { get; set; }
+        public string DbPassword { get; set; }
+        public string DbContainerName { get; set; }
     }
 
     public class ConfigGraphQlSection

@@ -33,7 +33,7 @@ public class Generator : BaseGenerator
         graphQlGenerator.GenerateGraphQl();
 
         projectGenerator.ModifyDefaultFiles();
-        databaseGenerator.CreateAndApplyInitialMigration();
+        databaseGenerator.CreateInitialMigration();
 
         dockerGenerator.GenerateDockerFiles();
         // generate docker file

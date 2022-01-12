@@ -16,18 +16,17 @@ public class DatabaseGenerator : BaseGenerator
         fm.Build();
     }
 
-    public void CreateAndApplyInitialMigration()
+    public void CreateInitialMigration()
     {
         var s = Config.Output.SourceFolder;
-        RunCommand("dotnet", "ef", "-p", s, "-s", s, "database", "update");
         RunCommand("dotnet", "ef", "-p", s, "-s", s, "migrations", "add", "initial-setup");
-        RunCommand("dotnet", "ef", "-p", s, "-s", s, "database", "update");
     }
 
     private void AddDatabaseContextClass(FileMaker fm)
     {
         var cm = StartClass(fm, Config.Database.DbContextClassName);
 
+        cm.AddUsing("System");
         cm.AddUsing("System.Collections.Generic");
         cm.AddUsing("Microsoft.EntityFrameworkCore");
 
@@ -40,17 +39,23 @@ public class DatabaseGenerator : BaseGenerator
 
         cm.AddClosure("protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)", liner =>
         {
+            liner.Add("var dbHost = Environment.GetEnvironmentVariable(\"DB_HOST\");");
+            liner.Add("var dbName = Environment.GetEnvironmentVariable(\"DB_DATABASENAME\");");
+            liner.Add("var dbUsername = Environment.GetEnvironmentVariable(\"DB_USERNAME\");");
+            liner.Add("var dbPassword = Environment.GetEnvironmentVariable(\"DB_PASSWORD\");");
+            liner.Add("var connectionString = \"Host=\" + dbHost + \";Database=\" + dbName + \";Username=\" + dbUsername + \";Password=\" + dbPassword;");
+
+            liner.Add("");
             liner.Add("optionsBuilder");
             liner.Indent();
             liner.Add(".UseLazyLoadingProxies()");
-            liner.Add(".UseNpgsql(@\"" + Config.Database.ConnectionString + "\");");
+            liner.Add(".UseNpgsql(connectionString);");
             liner.Deindent();
         });
     }
 
     public void AddStaticAccessClass(FileMaker fm)
     {
-        var contextName = "context";
         var cm = fm.AddClass(Config.Database.DbAccesserClassName);
         cm.Modifiers.Clear();
         cm.Modifiers.Add("static");

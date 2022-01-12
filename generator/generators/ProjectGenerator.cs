@@ -41,6 +41,10 @@ public class ProjectGenerator : BaseGenerator
             "app.UsePlayground();",
             "app.UseDeveloperExceptionPage();");
 
+        mf.ReplaceLine("app.UseRouting();", 
+            "app.UseRouting();", 
+            "Db.Context.Database.EnsureCreated();");
+
         mf.Modify();
     }
 }
