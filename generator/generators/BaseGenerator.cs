@@ -41,7 +41,7 @@ public class BaseGenerator
         return fm.AddClass(className);
     }
 
-    public void MakeDirA(params string[] path)
+    public void MakeDir(params string[] path)
     {
         var arr = new[] { Config.Output.ProjectRoot }.Concat(path).ToArray();
         var p = Path.Join(arr);
@@ -54,15 +54,20 @@ public class BaseGenerator
     public void MakeSrcDir(params string[] path)
     {
         var arr = new[] { Config.Output.SourceFolder }.Concat(path).ToArray();
-        MakeDirA(arr);
+        MakeDir(arr);
     }
 
     public void MakeTestDir(params string[] path)
     {
         var arr = new[] { Config.Output.TestFolder }.Concat(path).ToArray();
-        MakeDirA(arr);
+        MakeDir(arr);
     }
-    
+
+    public void WriteRawFile(string filename, string[] content)
+    {
+        File.WriteAllLines(filename, content);
+    }
+
     public string[] GetForeignProperties(GeneratorConfig.ModelConfig model)
     {
         return Models.Where(m => m.HasMany != null && m.HasMany.Contains(model.Name)).Select(m => m.Name).ToArray();

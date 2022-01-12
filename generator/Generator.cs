@@ -5,6 +5,8 @@ public class Generator : BaseGenerator
     private readonly DtoGenerator dtoGenerator;
     private readonly DatabaseGenerator databaseGenerator;
     private readonly GraphQlGenerator graphQlGenerator;
+    private readonly DockerGenerator dockerGenerator;
+    private readonly ReadmeGenerator readmeGenerator;
 
     public Generator(GeneratorConfig config)
         : base(config)
@@ -13,13 +15,15 @@ public class Generator : BaseGenerator
         dtoGenerator = new DtoGenerator(config);
         databaseGenerator = new DatabaseGenerator(config);
         graphQlGenerator = new GraphQlGenerator(config);
+        dockerGenerator = new DockerGenerator(config);
+        readmeGenerator = new ReadmeGenerator(config);
     }
 
     public void Generate()
     {
-        MakeDirA();
-        MakeDirA(Config.Output.SourceFolder);
-        MakeDirA(Config.Output.TestFolder);
+        MakeDir();
+        MakeDir(Config.Output.SourceFolder);
+        MakeDir(Config.Output.TestFolder);
 
         projectGenerator.CreateDotNetProject();
 
@@ -30,7 +34,11 @@ public class Generator : BaseGenerator
 
         projectGenerator.ModifyDefaultFiles();
         databaseGenerator.CreateAndApplyInitialMigration();
+
+        dockerGenerator.GenerateDockerFiles();
         // generate docker file
         // generate tests?
+        
+        readmeGenerator.GenerateReadme();
     }
 }
