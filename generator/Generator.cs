@@ -36,7 +36,7 @@ public class Generator : BaseGenerator
         databaseGenerator.CreateInitialMigration();
 
         dockerGenerator.GenerateDockerFiles();
-        // generate docker file
+        
         // generate tests?
         
         readmeGenerator.GenerateReadme();

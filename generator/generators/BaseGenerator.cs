@@ -68,6 +68,12 @@ public class BaseGenerator
         File.WriteAllLines(filename, content);
     }
 
+    public void DeleteFile(params string[] path)
+    {
+        var arr = new[] { Config.Output.ProjectRoot }.Concat(path).ToArray();
+        File.Delete(Path.Join(arr));
+    }
+
     public string[] GetForeignProperties(GeneratorConfig.ModelConfig model)
     {
         return Models.Where(m => m.HasMany != null && m.HasMany.Contains(model.Name)).Select(m => m.Name).ToArray();

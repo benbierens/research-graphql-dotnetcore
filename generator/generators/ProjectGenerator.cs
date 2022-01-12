@@ -22,6 +22,8 @@ public class ProjectGenerator : BaseGenerator
         RunCommand("dotnet", "add", Config.Output.TestFolder, "reference", Config.Output.SourceFolder + "/" + Config.Output.SourceFolder + ".csproj");
 
         RunCommand("dotnet", "tool", "install", "--global", "dotnet-ef");
+
+        DeleteFile(Config.Output.SourceFolder, "Query.cs");
     }
 
     public void ModifyDefaultFiles()

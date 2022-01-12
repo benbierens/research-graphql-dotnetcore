@@ -29,7 +29,7 @@ public class DockerGenerator : BaseGenerator
             "        restart: always",
             "        environment:",
             "            - POSTGRES_PASSWORD=" + Config.Database.DbPassword,
-            "            - POSTGRES_DB=graphqlee",
+            "            - POSTGRES_DB=" + Config.Database.DbName,
             "        volumes:",
             "            - db-data:/var/lib/postgresql",
             "    graphql:",
