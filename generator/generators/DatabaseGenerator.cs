@@ -37,12 +37,21 @@ public class DatabaseGenerator : BaseGenerator
             cm.AddProperty("DbSet<" + m.Name + ">", m.Name + "s");
         }
 
+        cm.AddBlankLine();
+
+        cm.AddClosure("private string GetEnvOrDefault(string env, string defaultValue)", liner => {
+            liner.Add("var value = Environment.GetEnvironmentVariable(env);");
+            liner.Add("if (value == null) return defaultValue;");
+            liner.Add("return value;");
+        });
+
         cm.AddClosure("protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)", liner =>
         {
-            liner.Add("var dbHost = Environment.GetEnvironmentVariable(\"DB_HOST\");");
-            liner.Add("var dbName = Environment.GetEnvironmentVariable(\"DB_DATABASENAME\");");
-            liner.Add("var dbUsername = Environment.GetEnvironmentVariable(\"DB_USERNAME\");");
-            liner.Add("var dbPassword = Environment.GetEnvironmentVariable(\"DB_PASSWORD\");");
+            var localDev = Config.Database.LocalDev;
+            liner.Add("var dbHost = GetEnvOrDefault(\"DB_HOST\", \"" + localDev.DbHost + "\");");
+            liner.Add("var dbName = GetEnvOrDefault(\"DB_DATABASENAME\", \"" + localDev.DbName + "\");");
+            liner.Add("var dbUsername = GetEnvOrDefault(\"DB_USERNAME\", \"" + localDev.DbUsername + "\");");
+            liner.Add("var dbPassword = GetEnvOrDefault(\"DB_PASSWORD\", \"" + localDev.DbPassword + "\");");
             liner.Add("var connectionString = \"Host=\" + dbHost + \";Database=\" + dbName + \";Username=\" + dbUsername + \";Password=\" + dbPassword;");
 
             liner.Add("");

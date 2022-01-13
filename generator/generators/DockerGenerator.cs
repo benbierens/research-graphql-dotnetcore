@@ -20,6 +20,7 @@ public class DockerGenerator : BaseGenerator
             "ENTRYPOINT [\"dotnet\", \"src.dll\"]"
         });
 
+        var dockerDb = Config.Database.Docker;
         WriteRawFile(Path.Combine(Config.Output.ProjectRoot, "docker-compose.yml"), new [] {
             "version: '3'",
             "services:",
@@ -28,8 +29,8 @@ public class DockerGenerator : BaseGenerator
             "        image: postgres",
             "        restart: always",
             "        environment:",
-            "            - POSTGRES_PASSWORD=" + Config.Database.DbPassword,
-            "            - POSTGRES_DB=" + Config.Database.DbName,
+            "            - POSTGRES_PASSWORD=" + dockerDb.DbPassword,
+            "            - POSTGRES_DB=" + dockerDb.DbName,
             "        volumes:",
             "            - db-data:/var/lib/postgresql",
             "    graphql:",
@@ -40,9 +41,9 @@ public class DockerGenerator : BaseGenerator
             "        environment:",
             "            - HOST=localhost",
             "            - DB_HOST=" + Config.Database.DbContainerName,
-            "            - DB_DATABASENAME=" + Config.Database.DbName,
-            "            - DB_USERNAME=" + Config.Database.DbUsername,
-            "            - DB_PASSWORD=" + Config.Database.DbPassword,
+            "            - DB_DATABASENAME=" + dockerDb.DbName,
+            "            - DB_USERNAME=" + dockerDb.DbUsername,
+            "            - DB_PASSWORD=" + dockerDb.DbPassword,
             "        ports:",
             "            - \"80:80\"",
             "        depends_on:",

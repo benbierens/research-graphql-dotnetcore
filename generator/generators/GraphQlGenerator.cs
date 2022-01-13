@@ -101,7 +101,7 @@ public class GraphQlGenerator : BaseGenerator
         var l = n.ToLowerInvariant();
         cm.AddLine("[Subscribe]");
         cm.AddLine("public " + n + " " + n + method + "([EventMessage] " + n + " _" + l + ") => _" + l + ";");
-        cm.AddLine("");
+        cm.AddBlankLine();
     }
 
     private InputTypeNames GetInputTypeNames(GeneratorConfig.ModelConfig model)

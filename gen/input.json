@@ -24,13 +24,21 @@
             "graphQlSubFolder": "gql"
         },
         "Database": {
-            "dbName": "graphqlee",
-            "dbUsername": "postgres",
-            "dbPassword": "admin_password_please",
             "dbContextClassName": "DatabaseContext",
             "dbAccesserClassName": "Db",
             "dbContextFileName": "DatabaseContext",
-            "dbContainerName": "db"
+            "dbContainerName": "db",
+            "localDev": {
+                "dbHost": "localhost",
+                "dbName": "graphqlee",
+                "dbUsername": "postgres",
+                "dbPassword": "admin"
+            },
+            "docker": {
+                "dbName": "graphqlee",
+                "dbUsername": "postgres",
+                "dbPassword": "admin_password_please"
+            }
         },
         "GraphQl": {
             "gqlTypesFileName": "GraphQlTypes",
@@ -64,7 +72,8 @@
                     "name": "Age",
                     "type": "int"
                 }
-            ]
+            ],
+            "hasMany": ["CatToy"]
         },
         {
             "name": "Couch",
@@ -75,6 +84,25 @@
                 }
             ],
             "hasMany": ["Cat"]
+        },
+        {
+            "name": "CatToy",
+            "fields": [
+                {
+                    "name": "Score",
+                    "type": "int"
+                }
+            ]
+        },
+        {
+            "name": "Toy",
+            "fields": [
+                {
+                    "name": "Label",
+                    "type": "string"
+                }
+            ],
+            "hasMany": ["CatToy"]
         }
     ]
 }

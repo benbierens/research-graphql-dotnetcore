@@ -27,6 +27,11 @@ public class ClassMaker
         lines.Add(line);
     }
 
+    public void AddBlankLine()
+    {
+        AddLine("");
+    }
+
     public void AddProperty(string type, string name)
     {
         lines.Add("public " + type + " " + name + " { get; set; }");
