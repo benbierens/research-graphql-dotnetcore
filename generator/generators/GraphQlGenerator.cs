@@ -63,12 +63,17 @@ public class GraphQlGenerator : BaseGenerator
             AddForeignProperties(addClass, model, "", true);
 
             var updateClass = StartClass(fm, inputTypeNames.Update);
-            updateClass.AddProperty(Config.IdType, model.Name + "Id");
+            updateClass.AddProperty(model.Name + "Id")
+                .IsType(Config.IdType)
+                .Build();
+
             AddModelFieldsAsNullable(updateClass, model);
-            AddForeignPropertiesAsNullable(updateClass, model, true);
+            AddForeignIdPropertiesAsNullable(updateClass, model);
 
             var deleteClass = StartClass(fm, inputTypeNames.Delete);
-            deleteClass.AddProperty(Config.IdType, model.Name + "Id");
+            deleteClass.AddProperty(model.Name + "Id")
+                .IsType(Config.IdType)
+                .Build();
         }
 
         fm.Build();
@@ -209,31 +214,40 @@ public class GraphQlGenerator : BaseGenerator
 
     private void AddAssignmentLine(Liner liner, string type, string fieldName, string inputName)
     {
-        if (Nullability.IsNullableRequiredForType(type))
-        {
-            liner.Add("if (" + inputName + "." + fieldName + ".HasValue) updateEntity." + fieldName + " = " + inputName + "." + fieldName + ".Value;");
-        }
-        else
-        {
-            liner.Add("if (" + inputName + "." + fieldName + " != null) updateEntity." + fieldName + " = " + inputName + "." + fieldName + ";");
-        }
+        liner.Add("if (" + inputName + "." + fieldName + " != null) updateEntity." + fieldName + " = " + inputName + "." + fieldName + Nullability.GetValueAccessor(type) + ";");
     }
 
     private void AddModelFieldsAsNullable(ClassMaker cm, GeneratorConfig.ModelConfig model)
     {
         foreach (var f in model.Fields)
         {
-            cm.AddNullableProperty(f.Type, f.Name);
+            cm.AddProperty(f.Name)
+                .IsType(f.Type)
+                .IsNullable()
+                .Build();
         }
     }
 
-    private void AddForeignPropertiesAsNullable(ClassMaker cm, GeneratorConfig.ModelConfig model, bool idOnly = false)
+    private void AddForeignIdProperties(ClassMaker cm, GeneratorConfig.ModelConfig model)
     {
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            cm.AddNullableProperty(Config.IdType, f + "Id");
-            if (!idOnly) cm.AddNullableProperty(f, f);
+            cm.AddProperty(f + "Id")
+                .IsType(Config.IdType)
+                .Build();
+        }
+    }
+
+    private void AddForeignIdPropertiesAsNullable(ClassMaker cm, GeneratorConfig.ModelConfig model)
+    {
+        var foreignProperties = GetForeignProperties(model);
+        foreach (var f in foreignProperties)
+        {
+            cm.AddProperty(f + "Id")
+                .IsType(Config.IdType)
+                .IsNullable()
+                .Build();
         }
     }
 }

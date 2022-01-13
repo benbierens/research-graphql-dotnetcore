@@ -20,7 +20,13 @@ public class ConfigLoader
         {
             if (!File.Exists(filename)) return null;
             var lines = File.ReadAllLines(filename);
-            return JsonConvert.DeserializeObject<GeneratorConfig>(string.Join(" ", lines));
+            var config = JsonConvert.DeserializeObject<GeneratorConfig>(string.Join(" ", lines));
+            foreach (var m in config.Models)
+            {
+                if (m.Fields == null) m.Fields = new GeneratorConfig.ModelField[0];
+                if (m.HasMany == null) m.HasMany = new string[0];
+            }
+            return config;
         }
         catch
         {

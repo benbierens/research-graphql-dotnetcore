@@ -93,17 +93,28 @@ public class BaseGenerator
     {
         foreach (var f in model.Fields)
         {
-            cm.AddProperty(f.Type, f.Name);
+            cm.AddProperty(f.Name)
+                .IsType(f.Type)
+                .Build();
         }
     }
     
-    public void AddForeignProperties(ClassMaker cm, GeneratorConfig.ModelConfig model, string typePrefix = "", bool idOnly = false)
+    public void AddForeignProperties(ClassMaker cm, GeneratorConfig.ModelConfig model, string modifier = "", bool idOnly = false)
     {
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            cm.AddProperty(Config.IdType, f + "Id");
-            if (!idOnly) cm.AddProperty(typePrefix + f, f);
+            cm.AddProperty(f + "Id")
+                .IsType(Config.IdType)
+                .Build();
+
+            if (!idOnly)
+            {
+                cm.AddProperty(f)
+                    .WithModifier(modifier)
+                    .IsType(f)
+                    .Build();
+            }
         }
     }
 }

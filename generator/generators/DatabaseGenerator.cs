@@ -34,7 +34,9 @@ public class DatabaseGenerator : BaseGenerator
 
         foreach (var m in Models)
         {
-            cm.AddProperty("DbSet<" + m.Name + ">", m.Name + "s");
+            cm.AddProperty(m.Name)
+                .IsDbSetOfType(m.Name)
+                .Build();
         }
 
         cm.AddBlankLine();

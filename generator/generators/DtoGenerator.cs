@@ -16,13 +16,19 @@ public class DtoGenerator : BaseGenerator
 
             cm.AddUsing("System.Collections.Generic");
 
-            cm.AddProperty(Config.IdType, "Id");
+            cm.AddProperty("Id")
+                .IsType(Config.IdType)
+                .Build();
+
             AddModelFields(cm, model);
 
-            if (model.HasMany != null) foreach (var m in model.HasMany)
-                {
-                    cm.AddProperty("virtual List<" + m + ">", m + "s");
-                }
+            foreach (var m in model.HasMany)
+            {
+                cm.AddProperty(m)
+                    .WithModifier("virtual")
+                    .IsListOfType(m)
+                    .Build();
+            }
             AddForeignProperties(cm, model, "virtual ");
 
             fm.Build();

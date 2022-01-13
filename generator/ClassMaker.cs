@@ -24,7 +24,7 @@ public class ClassMaker
 
     public void AddLine(string line)
     {
-        lines.Add(line);
+        lines.Add(NormalizeWhitespaces(line));
     }
 
     public void AddBlankLine()
@@ -32,23 +32,9 @@ public class ClassMaker
         AddLine("");
     }
 
-    public void AddProperty(string type, string name)
+    public PropertyMaker AddProperty(string name)
     {
-        lines.Add("public " + type + " " + name + " { get; set; }");
-    }
-
-    public void AddNullableProperty(string type, string name)
-    {
-        if (!usings.Contains("System")) usings.Add("System");
-
-        if (Nullability.IsNullableRequiredForType(type))
-        {
-            lines.Add("public Nullable<" + type + "> " + name + " { get; set; }");
-        }
-        else
-        {
-            AddProperty(type, name);
-        }
+        return new PropertyMaker(this, name);
     }
 
     public void AddInherrit(string name)
@@ -93,5 +79,14 @@ public class ClassMaker
     {
         if (!inherrit.Any()) return "";
         return " : " + string.Join(", ", inherrit);
+    }
+
+    private string NormalizeWhitespaces(string s)
+    {
+        while (s.Contains ("  "))
+        {
+            s = s.Replace("  ", " ");
+        }
+        return s;
     }
 }
