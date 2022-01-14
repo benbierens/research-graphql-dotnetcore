@@ -60,7 +60,7 @@ public class GraphQlGenerator : BaseGenerator
 
             var addClass = StartClass(fm, inputTypeNames.Create);
             AddModelFields(addClass, model);
-            AddForeignProperties(addClass, model, "", true);
+            AddForeignIdProperties(addClass, model);
 
             var updateClass = StartClass(fm, inputTypeNames.Update);
             updateClass.AddProperty(model.Name + "Id")
@@ -98,7 +98,6 @@ public class GraphQlGenerator : BaseGenerator
 
         fm.Build();
     }
-
 
     private void AddSubscriptionMethod(ClassMaker cm, string modelName, string method)
     {
@@ -147,13 +146,9 @@ public class GraphQlGenerator : BaseGenerator
         cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsUpdateMethod + model.Name +
         "(" + inputTypeNames.Update + " input, [Service] ITopicEventSender sender)", liner =>
         {
-            liner.Add(model.Name + " updateEntity = null;");
-
-            liner.StartClosure("using (var db = new DatabaseContext())");
-            liner.Add("updateEntity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
+            liner.Add("var updateEntity = " + Config.Database.DbAccesserClassName + ".Context.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
             AddModelUpdater(liner, model, "input");
-            liner.Add("db.SaveChanges();");
-            liner.EndClosure();
+            liner.Add(Config.Database.DbAccesserClassName + ".Context.SaveChanges();");
 
             liner.Add("await sender.SendAsync(\"" + model.Name + Config.GraphQl.GqlSubscriptionUpdatedMethod + "\", updateEntity);");
             liner.Add("return updateEntity;");
@@ -165,7 +160,7 @@ public class GraphQlGenerator : BaseGenerator
         cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsDeleteMethod + model.Name +
         "(" + inputTypeNames.Delete + " input, [Service] ITopicEventSender sender)", liner =>
         {
-            liner.Add(model.Name + " deleteEntity = null;");
+            liner.Add(model.Name + "? deleteEntity = null;");
 
             liner.StartClosure("using (var db = new DatabaseContext())");
             liner.Add("deleteEntity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
@@ -193,10 +188,9 @@ public class GraphQlGenerator : BaseGenerator
 
     private void AddDatabaseAddAndSave(Liner liner)
     {
-        liner.StartClosure("using (var db = new DatabaseContext())");
+        liner.Add("var db = " + Config.Database.DbAccesserClassName + ".Context;");
         liner.Add("db.Add(createEntity);");
         liner.Add("db.SaveChanges();");
-        liner.EndClosure();
     }
 
     private void AddModelUpdater(Liner liner, GeneratorConfig.ModelConfig model, string inputName)

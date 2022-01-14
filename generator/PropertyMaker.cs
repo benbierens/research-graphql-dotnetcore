@@ -9,6 +9,7 @@ public class PropertyMaker
     private bool isNullable;
     private bool isList;
     private bool isDbSet;
+    private bool explicitNullInitializer;
 
     public PropertyMaker(ClassMaker cm, string name)
     {
@@ -52,6 +53,12 @@ public class PropertyMaker
         return this;
     }
 
+    public PropertyMaker InitializeAsExplicitNull()
+    {
+        explicitNullInitializer = true;
+        return this;
+    }
+
     public void Build()
     {
         cm.AddLine("public " + 
@@ -89,6 +96,7 @@ public class PropertyMaker
 
     private string GetInitializer()
     {
+        if (explicitNullInitializer) return " = null!;";
         if (isNullable) return "";
         if (isList) return " = new List<" + type + ">();";
         if (isDbSet) return "Set<" + type + ">();";

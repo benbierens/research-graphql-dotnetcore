@@ -29,9 +29,26 @@ public class DtoGenerator : BaseGenerator
                     .IsListOfType(m)
                     .Build();
             }
-            AddForeignProperties(cm, model, "virtual ");
+            AddForeignProperties(cm, model);
 
             fm.Build();
+        }
+    }
+
+    private void AddForeignProperties(ClassMaker cm, GeneratorConfig.ModelConfig model)
+    {
+        var foreignProperties = GetForeignProperties(model);
+        foreach (var f in foreignProperties)
+        {
+            cm.AddProperty(f + "Id")
+                .IsType(Config.IdType)
+                .Build();
+
+            cm.AddProperty(f)
+                .WithModifier("virtual")
+                .IsType(f)
+                .InitializeAsExplicitNull()
+                .Build();
         }
     }
 }
