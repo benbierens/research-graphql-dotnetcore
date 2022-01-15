@@ -38,6 +38,11 @@ public class Liner
         lines.Add(line);
     }
 
+    public void AddBlankLine()
+    {
+        Add("");
+    }
+
     public string[] GetLines()
     {
         return lines.ToArray();

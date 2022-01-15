@@ -43,6 +43,7 @@ public class GeneratorConfig
         public ConfigOutputSection Output { get; set; }
         public ConfigDatabaseSection Database { get; set; }
         public ConfigGraphQlSection GraphQl { get; set; }
+        public ConfigTestSection Tests { get; set; }
         public string IdType { get; set; }
         public string[] Packages { get; set; }
     }
@@ -69,7 +70,7 @@ public class GeneratorConfig
         public ConfigDatabaseConnectionSection Docker { get; set; }
     }
 
-    public class ConfigDatabaseConnectionSection 
+    public class ConfigDatabaseConnectionSection
     {
         public string DbHost { get; set; }
         public string DbName { get; set; }
@@ -95,6 +96,12 @@ public class GeneratorConfig
         public string GqlSubscriptionCreatedMethod { get; set; }
         public string GqlSubscriptionUpdatedMethod { get; set; }
         public string GqlSubscriptionDeletedMethod { get; set; }
+    }
+
+    public class ConfigTestSection
+    {
+        public string TestCategory { get; set; }
+        public string SubFolder { get; set; }
     }
 
     public class ModelConfig

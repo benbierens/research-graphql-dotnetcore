@@ -44,21 +44,22 @@
             "gqlTypesFileName": "GraphQlTypes",
             "gqlQueriesClassName": "Queries",
             "gqlQueriesFileName": "Queries",
-
             "gqlMutationsClassName": "Mutations",
             "gqlMutationsFilename": "Mutations",
             "gqlMutationsInputTypePostfix": "Input",
             "gqlMutationsCreateMethod": "Create",
             "gqlMutationsUpdateMethod": "Update",
             "gqlMutationsDeleteMethod": "Delete",
-
             "gqlSubscriptionsClassName": "Subscriptions",
             "gqlSubscriptionsFilename": "Subscriptions",
             "gqlSubscriptionCreatedMethod": "Created",
             "gqlSubscriptionUpdatedMethod": "Updated",
             "gqlSubscriptionDeletedMethod": "Deleted"
+        },
+        "Tests": {
+            "testCategory": "GraphQlTests",
+            "subFolder": "graphQlTests"
         }
-
     },
     "models": [
         {
@@ -73,7 +74,9 @@
                     "type": "int"
                 }
             ],
-            "hasMany": ["CatToy"]
+            "hasMany": [
+                "CatToy"
+            ]
         },
         {
             "name": "Couch",
@@ -83,7 +86,9 @@
                     "type": "string"
                 }
             ],
-            "hasMany": ["Cat"]
+            "hasMany": [
+                "Cat"
+            ]
         },
         {
             "name": "CatToy",
@@ -102,7 +107,9 @@
                     "type": "string"
                 }
             ],
-            "hasMany": ["CatToy"]
+            "hasMany": [
+                "CatToy"
+            ]
         }
     ]
 }

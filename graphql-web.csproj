@@ -6,6 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="demo\**" />
+    <Content Remove="demo\**" />
+    <EmbeddedResource Remove="demo\**" />
+    <None Remove="demo\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Program.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="HotChocolate.AspNetCore" Version="10.5.2" />
     <PackageReference Include="HotChocolate.AspNetCore.Subscriptions" Version="10.5.2" />
     <PackageReference Include="HotChocolate.Subscriptions" Version="10.5.2" />

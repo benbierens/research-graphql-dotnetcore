@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System;
 
 public class BaseGenerator
 {
@@ -19,9 +20,9 @@ public class BaseGenerator
         return new FileMaker(Config, f);
     }
 
-    public FileMaker StartTestFile(string subfolder, string filename)
+    public FileMaker StartTestFile(string filename)
     {
-        var f = Path.Join(Config.Output.ProjectRoot, Config.Output.TestFolder, subfolder, filename + ".cs");
+        var f = Path.Join(Config.Output.ProjectRoot, Config.Output.TestFolder, Config.Tests.SubFolder, filename + ".cs");
         return new FileMaker(Config, f);
     }
 
@@ -63,9 +64,18 @@ public class BaseGenerator
         MakeDir(arr);
     }
 
-    public void WriteRawFile(string filename, string[] content)
+    //public void WriteRawFile(params string[] filePath, string[] content)
+    //{
+    //    var arr = new[] { Config.Output.ProjectRoot }.Concat(filePath).ToArray();
+    //    File.WriteAllLines(Path.Combine(arr), content);
+    //}
+
+    public void WriteRawFile(Action<Liner> onLiner, params string[] filePath)
     {
-        File.WriteAllLines(filename, content);
+        var arr = new[] { Config.Output.ProjectRoot }.Concat(filePath).ToArray();
+        var liner = new Liner();
+        onLiner(liner);
+        File.WriteAllLines(Path.Combine(arr), liner.GetLines());
     }
 
     public void DeleteFile(params string[] path)
@@ -78,7 +88,7 @@ public class BaseGenerator
     {
         return Models.Where(m => m.HasMany != null && m.HasMany.Contains(model.Name)).Select(m => m.Name).ToArray();
     }
-    
+
     public void RunCommand(string cmd, params string[] args)
     {
         var info = new ProcessStartInfo();
@@ -88,7 +98,7 @@ public class BaseGenerator
         var p = Process.Start(info);
         p.WaitForExit();
     }
-        
+
     public void AddModelFields(ClassMaker cm, GeneratorConfig.ModelConfig model)
     {
         foreach (var f in model.Fields)

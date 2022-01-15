@@ -8,6 +8,7 @@ public class ClassMaker
     private readonly List<string> lines = new List<string>();
     private readonly List<string> inherrit = new List<string>();
     private readonly List<string> usings = new List<string>();
+    private readonly List<string> attributes = new List<string>();
 
     public ClassMaker(string className)
     {
@@ -47,6 +48,11 @@ public class ClassMaker
         usings.Add(name);
     }
 
+    public void AddAttribute(string attribute)
+    {
+        attributes.Add(attribute);
+    }
+
     public void AddClosure(string name, Action<Liner> inClosure)
     {
         var liner = new Liner();
@@ -69,6 +75,11 @@ public class ClassMaker
 
         var distinct = Modifiers.Distinct().ToArray();
         var modifiers = string.Join(" ", distinct);
+
+        foreach (var att in attributes)
+        {
+            liner.Add("[" + att + "]");
+        }
         
         liner.StartClosure(modifiers + " " + className + GetInherritTag());
         foreach (var line in lines) liner.Add(line);
