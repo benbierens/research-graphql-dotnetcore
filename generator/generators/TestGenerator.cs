@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+
 public class TestGenerator : BaseGenerator
 {
     public TestGenerator(GeneratorConfig config)
@@ -10,7 +13,7 @@ public class TestGenerator : BaseGenerator
         MakeTestDir(Config.Tests.SubFolder);
         CreateBaseGqlTestClass();
         CreateDockerControllerClass();
-
+        CreateQueryClasses();
     }
 
     private void CreateBaseGqlTestClass()
@@ -18,10 +21,22 @@ public class TestGenerator : BaseGenerator
         var fm = StartTestFile("BaseGqlTese");
         var cm = fm.AddClass("BaseGqlTest");
         cm.AddUsing("NUnit.Framework");
+        cm.AddUsing("System");
+        cm.AddUsing("System.Net.Http");
+        cm.AddUsing("System.Text");
+        cm.AddUsing("System.Threading.Tasks");
+        cm.AddUsing("gqldemo_generated");
+        cm.AddUsing("System.Collections.Generic");
+        cm.AddUsing("Newtonsoft.Json");
+
         cm.AddAttribute("Category(\"" + Config.Tests.TestCategory + "\")");
         cm.AddProperty("Docker")
             .IsType("DockerController")
             .Build();
+
+        cm.AddLine("private readonly HttpClient http = new HttpClient();");
+
+        AddQueryMethods(cm);
 
         fm.Build();
     }
@@ -54,48 +69,80 @@ public class TestGenerator : BaseGenerator
 
         fm.Build();
     }
+
+    private void CreateQueryClasses()
+    {
+        var fm = StartTestFile("QueryClasses");
+        CreateQueryDataClass(fm);
+
+        foreach (var m in Models)
+        {
+            CreateQueryClassForModel(fm, m);
+        }
+
+        fm.Build();
+    }
+
+    private void CreateQueryClassForModel(FileMaker fm, GeneratorConfig.ModelConfig m)
+    {
+        var cm = fm.AddClass("All" + m.Name + "sQuery");
+        cm.AddUsing("System.Collections.Generic");
+        cm.AddProperty(m.Name)
+            .IsListOfType(m.Name)
+            .Build();
+    }
+
+    private void CreateQueryDataClass(FileMaker fm)
+    {
+        var cm = fm.AddClass("GqlData<T>");
+        cm.AddProperty("Data")
+            .IsType("T")
+            .IsNullable()
+            .Build();
+        fm.Build();
+    }
+
+    private void AddQueryMethods(ClassMaker cm)
+    {
+        foreach (var m in Models)
+        {
+            AddQueryMethod(cm, m);
+        }
+
+        cm.AddClosure("private async Task<T> PostRequest<T>(string query)", liner =>
+        {
+            liner.Add("var response = await http.PostAsync(\"http://localhost/graphql/\", new StringContent(query, Encoding.UTF8, \"application/json\"));");
+            liner.Add("var content = await response.Content.ReadAsStringAsync();");
+            liner.Add("var result = JsonConvert.DeserializeObject<GqlData<T>>(content);");
+            liner.Add("if (result.Data == null) throw new Exception(\"Query failed.\");");
+            liner.Add("return result.Data;");
+        });
+    }
+
+    private void AddQueryMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    {
+        cm.AddClosure("protected async Task<List<" + m.Name + ">> QueryAll" + m.Name + "s()", lines =>
+        {
+            lines.Add("var query = \"{ \\\"query\\\": \\\"query { " + m.Name.ToLowerInvariant() + "s { " + GetQueryFields(m) +" } } \\\" }\";");
+            lines.Add("var data = await PostRequest<All" + m.Name + "sQuery>(query);");
+            lines.Add("return data." + m.Name + "s;");
+        });
+    }
+
+    private string GetQueryFields(GeneratorConfig.ModelConfig m)
+    {
+        var foreignProperties = GetForeignProperties(m);
+        var foreignIds = string.Join(" ", foreignProperties.Select(f => f.ToLowerInvariant() + "Id"));
+        return "id " + string.Join(" ", m.Fields.Select(f => f.Name.ToLowerInvariant())) + " " + foreignIds;
+    }
 }
 
-//using System;
-//using System.Net.Http;
-//using System.Text;
-//using System.Threading;
-//using System.Threading.Tasks;
-//using gqldemo_generated;
-//using Newtonsoft.Json;
-//using NUnit.Framework;
-
-//namespace test
-//{
-//    public class Tests : BaseGqlTest
-//    {
-//        private readonly HttpClient http = new HttpClient();
-
-//        [SetUp]
-//        public void Setup()
-//        {
-//            //Docker.Start();
-//        }
-
-//        [TearDown]
-//        public void TearDown()
-//        {
-//            //Docker.StopAndClean();
-//        }
 
 //        private async Task<Cat[]> QueryAllCats()
 //        {
-//            TestContext.WriteLine("doing query...");
-
 //            var query = "{  \"query\": \"query {  cats {    id    name    age  }}\" }";
-
-//            var response = await http.PostAsync("http://localhost/graphql/",
-//                new StringContent(query, Encoding.UTF8, "application/json"));
-
-//            //response:{"data":{"cats":[]}}
+//            var response = await http.PostAsync("http://localhost/graphql/", new StringContent(query, Encoding.UTF8, "application/json"));
 //            var content = await response.Content.ReadAsStringAsync();
-//            TestContext.WriteLine("response:" + content);
-
 //            var data = JsonConvert.DeserializeObject<GqlData<AllCatsQuery>>(content);
 //            return data.Data.Cats;
 //        }
@@ -131,20 +178,37 @@ public class TestGenerator : BaseGenerator
 //            TestContext.WriteLine("mutation response:" + content);
 //        }
 
-//        public class GqlData<T>
+
+
+
+
+//using System;
+//using System.Net.Http;
+//using System.Text;
+//using System.Threading;
+//using System.Threading.Tasks;
+//using gqldemo_generated;
+//using Newtonsoft.Json;
+//using NUnit.Framework;
+
+//namespace test
+//{
+//    public class Tests : BaseGqlTest
+//    {
+//        private readonly HttpClient http = new HttpClient();
+
+//        [SetUp]
+//        public void Setup()
 //        {
-//            public T Data { get; set; }
+//            //Docker.Start();
 //        }
 
-//        public class AllCatsQuery
+//        [TearDown]
+//        public void TearDown()
 //        {
-//            public Cat[] Cats { get; set; }
+//            //Docker.StopAndClean();
 //        }
 
-//        public class AllCouchesQuery
-//        {
-//            public Couch[] Couchs { get; set; }
-//        }
 
 //        [Test]
 //        public async Task Test1()
