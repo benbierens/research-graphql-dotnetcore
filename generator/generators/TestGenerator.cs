@@ -99,7 +99,11 @@ public class TestGenerator : BaseGenerator
             .IsType("T")
             .IsNullable()
             .Build();
-        fm.Build();
+
+        var cm2 = fm.AddClass("MutationResponse");
+        cm2.AddProperty("Id")
+            .IsType(Config.IdType)
+            .Build();
     }
 
     private void AddQueryMethods(ClassMaker cm)
@@ -107,6 +111,7 @@ public class TestGenerator : BaseGenerator
         foreach (var m in Models)
         {
             AddQueryMethod(cm, m);
+            AddCreateMethod(cm, m);
         }
 
         cm.AddClosure("private async Task<T> PostRequest<T>(string query)", liner =>
@@ -114,18 +119,39 @@ public class TestGenerator : BaseGenerator
             liner.Add("var response = await http.PostAsync(\"http://localhost/graphql/\", new StringContent(query, Encoding.UTF8, \"application/json\"));");
             liner.Add("var content = await response.Content.ReadAsStringAsync();");
             liner.Add("var result = JsonConvert.DeserializeObject<GqlData<T>>(content);");
-            liner.Add("if (result.Data == null) throw new Exception(\"Query failed.\");");
+            liner.Add("if (result.Data == null) throw new Exception(\"GraphQl operation failed.\");");
             liner.Add("return result.Data;");
         });
     }
 
     private void AddQueryMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
     {
-        cm.AddClosure("protected async Task<List<" + m.Name + ">> QueryAll" + m.Name + "s()", lines =>
+        cm.AddClosure("protected async Task<List<" + m.Name + ">> QueryAll" + m.Name + "s()", liner =>
         {
-            lines.Add("var query = \"{ \\\"query\\\": \\\"query { " + m.Name.ToLowerInvariant() + "s { " + GetQueryFields(m) +" } } \\\" }\";");
-            lines.Add("var data = await PostRequest<All" + m.Name + "sQuery>(query);");
-            lines.Add("return data." + m.Name + "s;");
+            liner.Add("var query = \"{ \\\"query\\\": \\\"query { " + m.Name.ToLowerInvariant() + "s { " + GetQueryFields(m) +" } } \\\" }\";");
+            liner.Add("var data = await PostRequest<All" + m.Name + "sQuery>(query);");
+            liner.Add("return data." + m.Name + "s;");
+        });
+    }
+
+    private void AddCreateMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    {
+
+        //private async Task CreateCouch(string location)
+        //{
+        //    TestContext.WriteLine("doing mutation...");
+
+        //    var query = \"{ \\\"query\\\": \\\"mutation {    createCouch(input: {      location: \\\"" + location + "\\\"    }) { id }  }\\\" }";
+
+
+        //    TestContext.WriteLine("mutation response:" + content);
+        //}
+
+        cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + GetCreateMutationArguments(m) + ")", liner =>
+        {
+            liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
+            liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
+            liner.Add("return data.Id;");
         });
     }
 
@@ -134,6 +160,26 @@ public class TestGenerator : BaseGenerator
         var foreignProperties = GetForeignProperties(m);
         var foreignIds = string.Join(" ", foreignProperties.Select(f => f.ToLowerInvariant() + "Id"));
         return "id " + string.Join(" ", m.Fields.Select(f => f.Name.ToLowerInvariant())) + " " + foreignIds;
+    }
+
+    private string GetCreateMutationArguments(GeneratorConfig.ModelConfig m)
+    {
+        var foreignProperties = GetForeignProperties(m);
+        var fields = m.Fields.Select(f => f.Type + " " + f.Name.ToLowerInvariant());
+        var foreignIds = foreignProperties.Select(f => Config.IdType + " " + f.ToLowerInvariant() + "Id");
+        var all = fields.Concat(foreignIds);
+        return string.Join(", ", all);
+    }
+
+    private string GetCreateMutationInput(GeneratorConfig.ModelConfig m)
+    {
+        var argumentize = new Func<string, string>(f => f + ": \\\"\" + " + f + " + \"\\\"");
+
+        var foreignProperties = GetForeignProperties(m);
+        var fields = m.Fields.Select(f => f.Name.ToLowerInvariant()).Select(argumentize);
+        var foreignIds = foreignProperties.Select(f => f.ToLowerInvariant() + "Id").Select(argumentize);
+        var all = fields.Concat(foreignIds);
+        return string.Join(" ", all);
     }
 }
 
