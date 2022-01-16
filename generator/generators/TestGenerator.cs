@@ -18,7 +18,7 @@ public class TestGenerator : BaseGenerator
 
     private void CreateBaseGqlTestClass()
     {
-        var fm = StartTestFile("BaseGqlTese");
+        var fm = StartTestFile("BaseGqlTest");
         var cm = fm.AddClass("BaseGqlTest");
         cm.AddUsing("NUnit.Framework");
         cm.AddUsing("System");
