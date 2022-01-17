@@ -45,6 +45,7 @@ public class ProjectGenerator : BaseGenerator
 
         mf.ReplaceLine("app.UseRouting();", 
             "app.UseRouting();", 
+            "app.UseWebSockets();",
             "Db.Context.Database.EnsureCreated();");
 
         mf.Modify();

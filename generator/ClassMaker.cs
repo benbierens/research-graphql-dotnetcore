@@ -5,15 +5,16 @@ using System.Linq;
 public class ClassMaker
 {
     private readonly string className;
+    private readonly bool isInterface;
     private readonly List<string> lines = new List<string>();
     private readonly List<string> inherrit = new List<string>();
     private readonly List<string> usings = new List<string>();
     private readonly List<string> attributes = new List<string>();
 
-    public ClassMaker(string className)
+    public ClassMaker(string className, bool isInterface = false)
     {
         this.className = className;
-
+        this.isInterface = isInterface;
         Modifiers = new List<string>();
         Modifiers.Add("partial");
     }
@@ -71,7 +72,8 @@ public class ClassMaker
     public void Write(Liner liner)
     {
         Modifiers.Insert(0, "public");
-        Modifiers.Add("class");
+        if (isInterface) Modifiers.Add("interface");
+        else Modifiers.Add("class");
 
         var distinct = Modifiers.Distinct().ToArray();
         var modifiers = string.Join(" ", distinct);

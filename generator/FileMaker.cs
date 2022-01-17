@@ -20,6 +20,13 @@ public class FileMaker
         return cm;
     }
 
+    public ClassMaker AddInterface(string className)
+    {
+        var cm = new ClassMaker(className, true);
+        classMakers.Add(cm);
+        return cm;
+    }
+
     public void Build()
     {
         var liner = new Liner();

@@ -12,6 +12,7 @@ public class TestGenerator : BaseGenerator
     {
         MakeTestDir(Config.Tests.SubFolder);
         CreateBaseGqlTestClass();
+        CreateSubscriptionHandleClass();
         CreateDockerControllerClass();
         CreateQueryClasses();
     }
@@ -35,8 +36,97 @@ public class TestGenerator : BaseGenerator
             .Build();
 
         cm.AddLine("private readonly HttpClient http = new HttpClient();");
+        cm.AddLine("private readonly List<ISubscriptionHandle> handles = new List<ISubscriptionHandle>();");
 
-        AddQueryMethods(cm);
+        AddModelMethods(cm);
+
+        fm.Build();
+    }
+
+    private void CreateSubscriptionHandleClass()
+    {
+        var fm = StartTestFile("SubscriptionHandle");
+        var im = fm.AddInterface("ISubscriptionHandle");
+        im.AddLine("Task Subscribe();");
+        im.AddLine("Task Unsubscribe();");
+
+        var cm = fm.AddClass("SubscriptionHandle<T>");
+        cm.AddInherrit("ISubscriptionHandle");
+        cm.AddUsing("System");
+        cm.AddUsing("System.Collections.Generic");
+        cm.AddUsing("System.Linq");
+        cm.AddUsing("System.Net.WebSockets");
+        cm.AddUsing("System.Text");
+        cm.AddUsing("System.Threading");
+        cm.AddUsing("System.Threading.Tasks");
+        cm.AddUsing("Newtonsoft.Json");
+        cm.AddUsing("NUnit.Framework");
+
+        cm.AddLine("private readonly string subscription;");
+        cm.AddLine("private readonly string[] fields;");
+        cm.AddLine("private readonly CancellationTokenSource cts = new CancellationTokenSource();");
+        cm.AddLine("private readonly ClientWebSocket ws = new ClientWebSocket();");
+        cm.AddLine("private readonly List<string> received = new List<string>();");
+        cm.AddLine("private bool running;");
+        cm.AddBlankLine();
+
+        cm.AddClosure("public SubscriptionHandle(string subscription, params string[] fields)", liner => 
+        {
+            liner.Add("this.subscription = subscription;");
+            liner.Add("this.fields = fields;");
+            liner.Add("running = true;");
+            liner.Add("ws.Options.AddSubProtocol(\"graphql-ws\");");
+        });
+
+        cm.AddClosure("public async Task Subscribe()", liner => 
+        {
+            liner.Add("await ws.ConnectAsync(new Uri(\"ws://localhost/graphql\"), cts.Token);");
+            liner.Add("var _ = Task.Run(ReceivingLoop);");
+            liner.Add("var f = \"{\" + string.Join(\" \", fields) + \" }\";");
+            liner.Add("await Send(\"{type: \\\"connection_init\\\", payload: {}}\");");
+            liner.Add("await Send(\"{\\\"id\\\":\\\"1\\\",\\\"type\\\":\\\"start\\\",\\\"payload\\\":{\\\"query\\\":\\\"subscription { \" + subscription + f + \" }\\\"}}\");");
+        });
+
+        cm.AddClosure("public async Task Unsubscribe()", liner => 
+        {
+            liner.Add("running = false;");
+            liner.Add("await Send(\"{\\\"id\\\":\\\"1\\\",\\\"type\\\":\\\"stop\\\"}\");");
+        });
+
+        cm.AddClosure("public T AssertReceived()", liner => 
+        {
+            liner.Add("var line = received.SingleOrDefault(l => l.Contains(subscription));");
+            liner.StartClosure("if (line == null)");
+            liner.Add("Assert.Fail(\"Expected subscription '\" + subscription + \"', but was not received.\");");
+            liner.Add("throw new Exception();");
+            liner.EndClosure();
+            liner.StartClosure("if (line.Contains(\"errors\"))");
+            liner.Add("Assert.Fail(\"Response contains errors:\" + line);");
+            liner.Add("throw new Exception();");
+            liner.EndClosure();
+            liner.Add("var sub = line.Substring(line.IndexOf(subscription));");
+            liner.Add("sub = sub.Substring(sub.IndexOf('{'));");
+            liner.Add("sub = sub.Substring(0, sub.IndexOf('}') + 1);");
+            liner.Add("return JsonConvert.DeserializeObject<T>(sub);");
+        });
+
+        cm.AddClosure("private async Task ReceivingLoop()", liner => 
+        {
+            liner.StartClosure("while (running)");
+            liner.Add("var bytes = new byte[1024];");
+            liner.Add("var buffer = new ArraySegment<byte>(bytes);");
+            liner.Add("var receive = await ws.ReceiveAsync(buffer, cts.Token);");
+            liner.Add("var l = bytes.Take(receive.Count).ToArray();");
+            liner.Add("received.Add(Encoding.UTF8.GetString(l));");
+            liner.EndClosure();
+        });
+
+        cm.AddClosure("private async Task Send(string query)", liner => 
+        {            
+            liner.Add("var qbytes = Encoding.UTF8.GetBytes(query);");
+            liner.Add("var segment= new ArraySegment<byte>(qbytes);");
+            liner.Add("await ws.SendAsync(segment, WebSocketMessageType.Text, true, cts.Token);");
+        });
 
         fm.Build();
     }
@@ -106,12 +196,13 @@ public class TestGenerator : BaseGenerator
             .Build();
     }
 
-    private void AddQueryMethods(ClassMaker cm)
+    private void AddModelMethods(ClassMaker cm)
     {
         foreach (var m in Models)
         {
-            AddQueryMethod(cm, m);
-            AddCreateMethod(cm, m);
+            AddQueryAllMethod(cm, m);
+            AddCreateMutationMethod(cm, m);
+            AddSubscribeCreatedMethod(cm, m);
         }
 
         cm.AddClosure("private async Task<T> PostRequest<T>(string query)", liner =>
@@ -124,7 +215,7 @@ public class TestGenerator : BaseGenerator
         });
     }
 
-    private void AddQueryMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    private void AddQueryAllMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
     {
         cm.AddClosure("protected async Task<List<" + m.Name + ">> QueryAll" + m.Name + "s()", liner =>
         {
@@ -134,24 +225,25 @@ public class TestGenerator : BaseGenerator
         });
     }
 
-    private void AddCreateMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    private void AddCreateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
     {
-
-        //private async Task CreateCouch(string location)
-        //{
-        //    TestContext.WriteLine("doing mutation...");
-
-        //    var query = \"{ \\\"query\\\": \\\"mutation {    createCouch(input: {      location: \\\"" + location + "\\\"    }) { id }  }\\\" }";
-
-
-        //    TestContext.WriteLine("mutation response:" + content);
-        //}
-
         cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + GetCreateMutationArguments(m) + ")", liner =>
         {
             liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
             liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
             liner.Add("return data.Id;");
+        });
+    }
+
+    private void AddSubscribeCreatedMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    {
+        cm.AddClosure("protected async Task<SubscriptionHandle<" + m.Name + ">> SubscribeTo" + m.Name + Config.GraphQl.GqlSubscriptionCreatedMethod + "()", liner =>
+        {
+            var fields = GetCreatedSubscriptionFields(m);
+            liner.Add("var s = new SubscriptionHandle<" + m.Name + ">(\"" + m.Name.ToLowerInvariant() + Config.GraphQl.GqlSubscriptionCreatedMethod + "\", " + fields + ");");
+            liner.Add("await s.Subscribe();");
+            liner.Add("handles.Add(s);");
+            liner.Add("return s;");            
         });
     }
 
@@ -181,99 +273,15 @@ public class TestGenerator : BaseGenerator
         var all = fields.Concat(foreignIds);
         return string.Join(" ", all);
     }
+
+    private string GetCreatedSubscriptionFields(GeneratorConfig.ModelConfig m)
+    {
+        var foreignProperties = GetForeignProperties(m);
+
+        var fields = new []{ "\"id\""}
+            .Concat(m.Fields.Select(f => "\"" + f.Name.ToLowerInvariant() + "\""))
+            .Concat(foreignProperties.Select(f => "\"" + f.ToLowerInvariant() + "Id\""));
+
+        return string.Join(", ", fields);
+    }
 }
-
-
-//        private async Task<Cat[]> QueryAllCats()
-//        {
-//            var query = "{  \"query\": \"query {  cats {    id    name    age  }}\" }";
-//            var response = await http.PostAsync("http://localhost/graphql/", new StringContent(query, Encoding.UTF8, "application/json"));
-//            var content = await response.Content.ReadAsStringAsync();
-//            var data = JsonConvert.DeserializeObject<GqlData<AllCatsQuery>>(content);
-//            return data.Data.Cats;
-//        }
-
-
-//        private async Task<Couch[]> QueryAllCouches()
-//        {
-//            TestContext.WriteLine("doing query...");
-
-//            var query = "{  \"query\": \"query {  couchs {    id    location  }}\" }";
-
-//            var response = await http.PostAsync("http://localhost/graphql/",
-//                new StringContent(query, Encoding.UTF8, "application/json"));
-
-//            //response:{"data":{"cats":[]}}
-//            var content = await response.Content.ReadAsStringAsync();
-//            TestContext.WriteLine("response:" + content);
-
-//            var data = JsonConvert.DeserializeObject<GqlData<AllCouchesQuery>>(content);
-//            return data.Data.Couchs;
-//        }
-
-//        private async Task CreateCouch(string location)
-//        {
-//            TestContext.WriteLine("doing mutation...");
-
-//            var query = "{ \"query\": \"mutation {    createCouch(input: {      location: \\\"" + location + "\\\"    }) { id }  }\" }";
-
-//            var response = await http.PostAsync("http://localhost/graphql/",
-//                new StringContent(query, Encoding.UTF8, "application/json"));
-
-//            var content = await response.Content.ReadAsStringAsync();
-//            TestContext.WriteLine("mutation response:" + content);
-//        }
-
-
-
-
-
-//using System;
-//using System.Net.Http;
-//using System.Text;
-//using System.Threading;
-//using System.Threading.Tasks;
-//using gqldemo_generated;
-//using Newtonsoft.Json;
-//using NUnit.Framework;
-
-//namespace test
-//{
-//    public class Tests : BaseGqlTest
-//    {
-//        private readonly HttpClient http = new HttpClient();
-
-//        [SetUp]
-//        public void Setup()
-//        {
-//            //Docker.Start();
-//        }
-
-//        [TearDown]
-//        public void TearDown()
-//        {
-//            //Docker.StopAndClean();
-//        }
-
-
-//        [Test]
-//        public async Task Test1()
-//        {
-//            var couches = await QueryAllCouches();
-//            foreach (var c in couches)
-//            {
-//                TestContext.WriteLine("Couch: " + c.Location);
-//            }
-
-//            await CreateCouch("Super!");
-
-//            var updatedcouches = await QueryAllCouches();
-//            foreach (var c in updatedcouches)
-//            {
-//                TestContext.WriteLine("Updated Couch: " + c.Location);
-//            }
-
-//            Assert.Fail();
-//        }
-//    }
-//}
