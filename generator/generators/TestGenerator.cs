@@ -18,6 +18,7 @@ public class TestGenerator : BaseGenerator
     public void GenerateTests()
     {
         MakeTestDir(Config.Tests.SubFolder);
+        
         baseGqlTestClassGenerator.CreateBaseGqlTestClass();
         subscriptionHandleClassGenerator.CreateSubscriptionHandleClass();
         dockerControllerClassGenerator.CreateDockerControllerClass();

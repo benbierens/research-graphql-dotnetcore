@@ -3,9 +3,16 @@ using System.Linq;
 
 public class BaseGqlTestClassGenerator : BaseGenerator
 {
+    private readonly QueryAllMethodSubgenerator queryAllMethodSubgenerator;
+    private readonly MutationMethodsSubgenerator mutationMethodsSubgenerator;
+    private readonly SubscriptionMethodsSubgenerator subscriptionMethodsSubgenerator;
+
     public BaseGqlTestClassGenerator(GeneratorConfig config)
         : base(config)
     {
+        queryAllMethodSubgenerator = new QueryAllMethodSubgenerator(config);
+        mutationMethodsSubgenerator = new MutationMethodsSubgenerator(config);
+        subscriptionMethodsSubgenerator = new SubscriptionMethodsSubgenerator(config);
     }
     
     public void CreateBaseGqlTestClass()
@@ -48,9 +55,9 @@ public class BaseGqlTestClassGenerator : BaseGenerator
     {
         foreach (var m in Models)
         {
-            AddQueryAllMethod(cm, m);
-            AddCreateMutationMethod(cm, m);
-            AddSubscribeCreatedMethod(cm, m);
+            queryAllMethodSubgenerator.AddQueryAllMethod(cm, m);
+            mutationMethodsSubgenerator.AddMutationMethods(cm, m);
+            subscriptionMethodsSubgenerator.AddSubscribeMethods(cm, m);
         }
 
         cm.AddClosure("private async Task<T> PostRequest<T>(string query)", liner =>
@@ -63,73 +70,111 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         });
     }
     
-    private void AddQueryAllMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    public class QueryAllMethodSubgenerator : BaseGenerator
     {
-        cm.AddClosure("protected async Task<List<" + m.Name + ">> QueryAll" + m.Name + "s()", liner =>
+        public QueryAllMethodSubgenerator(GeneratorConfig config)
+            : base(config)
         {
-            liner.Add("var query = \"{ \\\"query\\\": \\\"query { " + m.Name.ToLowerInvariant() + "s { " + GetQueryFields(m) +" } } \\\" }\";");
-            liner.Add("var data = await PostRequest<All" + m.Name + "sQuery>(query);");
-            liner.Add("return data." + m.Name + "s;");
-        });
-    }
-
-    private void AddCreateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
-    {
-        cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + GetCreateMutationArguments(m) + ")", liner =>
+        }
+        
+        public void AddQueryAllMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
         {
-            liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
-            liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
-            liner.Add("return data.Id;");
-        });
-    }
+            cm.AddClosure("protected async Task<List<" + m.Name + ">> QueryAll" + m.Name + "s()", liner =>
+            {
+                liner.Add("var query = \"{ \\\"query\\\": \\\"query { " + m.Name.ToLowerInvariant() + "s { " + GetQueryFields(m) +" } } \\\" }\";");
+                liner.Add("var data = await PostRequest<All" + m.Name + "sQuery>(query);");
+                liner.Add("return data." + m.Name + "s;");
+            });
+        }
 
-    private void AddSubscribeCreatedMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
-    {
-        cm.AddClosure("protected async Task<SubscriptionHandle<" + m.Name + ">> SubscribeTo" + m.Name + Config.GraphQl.GqlSubscriptionCreatedMethod + "()", liner =>
+        private string GetQueryFields(GeneratorConfig.ModelConfig m)
         {
-            var fields = GetCreatedSubscriptionFields(m);
-            liner.Add("var s = new SubscriptionHandle<" + m.Name + ">(\"" + m.Name.ToLowerInvariant() + Config.GraphQl.GqlSubscriptionCreatedMethod + "\", " + fields + ");");
-            liner.Add("await s.Subscribe();");
-            liner.Add("handles.Add(s);");
-            liner.Add("return s;");            
-        });
+            var foreignProperties = GetForeignProperties(m);
+            var foreignIds = string.Join(" ", foreignProperties.Select(f => f.ToLowerInvariant() + "Id"));
+            return "id " + string.Join(" ", m.Fields.Select(f => f.Name.ToLowerInvariant())) + " " + foreignIds;
+        }
     }
 
-    private string GetQueryFields(GeneratorConfig.ModelConfig m)
+    public class MutationMethodsSubgenerator : BaseGenerator
     {
-        var foreignProperties = GetForeignProperties(m);
-        var foreignIds = string.Join(" ", foreignProperties.Select(f => f.ToLowerInvariant() + "Id"));
-        return "id " + string.Join(" ", m.Fields.Select(f => f.Name.ToLowerInvariant())) + " " + foreignIds;
+        public MutationMethodsSubgenerator(GeneratorConfig config)
+            : base(config)
+        {
+        }
+
+        public void AddMutationMethods(ClassMaker cm, GeneratorConfig.ModelConfig m)
+        {
+            AddCreateMutationMethod(cm, m);
+            // delete,
+            // update
+        }
+
+        private void AddCreateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+        {
+            cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + GetCreateMutationArguments(m) + ")", liner =>
+            {
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
+                liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
+                liner.Add("return data.Id;");
+            });
+        }
+
+        private string GetCreateMutationArguments(GeneratorConfig.ModelConfig m)
+        {
+            var foreignProperties = GetForeignProperties(m);
+            var fields = m.Fields.Select(f => f.Type + " " + f.Name.ToLowerInvariant());
+            var foreignIds = foreignProperties.Select(f => Config.IdType + " " + f.ToLowerInvariant() + "Id");
+            var all = fields.Concat(foreignIds);
+            return string.Join(", ", all);
+        }
+
+        private string GetCreateMutationInput(GeneratorConfig.ModelConfig m)
+        {
+            var argumentize = new Func<string, string>(f => f + ": \\\\\\\"\" + " + f + " + \"\\\\\\\"");
+
+            var foreignProperties = GetForeignProperties(m);
+            var fields = m.Fields.Select(f => f.Name.ToLowerInvariant()).Select(argumentize);
+            var foreignIds = foreignProperties.Select(f => f.ToLowerInvariant() + "Id").Select(argumentize);
+            var all = fields.Concat(foreignIds);
+            return string.Join(" ", all);
+        }
     }
 
-    private string GetCreateMutationArguments(GeneratorConfig.ModelConfig m)
+    public class SubscriptionMethodsSubgenerator : BaseGenerator
     {
-        var foreignProperties = GetForeignProperties(m);
-        var fields = m.Fields.Select(f => f.Type + " " + f.Name.ToLowerInvariant());
-        var foreignIds = foreignProperties.Select(f => Config.IdType + " " + f.ToLowerInvariant() + "Id");
-        var all = fields.Concat(foreignIds);
-        return string.Join(", ", all);
-    }
+        public SubscriptionMethodsSubgenerator(GeneratorConfig config)
+            : base(config)
+        {
+        }
 
-    private string GetCreateMutationInput(GeneratorConfig.ModelConfig m)
-    {
-        var argumentize = new Func<string, string>(f => f + ": \\\\\\\"\" + " + f + " + \"\\\\\\\"");
+        public void AddSubscribeMethods(ClassMaker cm, GeneratorConfig.ModelConfig m)
+        {
+            AddSubscribeCreatedMethod(cm, m);
+            // updated
+            // deleted
+        }
+        
+        private void AddSubscribeCreatedMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+        {
+            cm.AddClosure("protected async Task<SubscriptionHandle<" + m.Name + ">> SubscribeTo" + m.Name + Config.GraphQl.GqlSubscriptionCreatedMethod + "()", liner =>
+            {
+                var fields = GetCreatedSubscriptionFields(m);
+                liner.Add("var s = new SubscriptionHandle<" + m.Name + ">(\"" + m.Name.ToLowerInvariant() + Config.GraphQl.GqlSubscriptionCreatedMethod + "\", " + fields + ");");
+                liner.Add("await s.Subscribe();");
+                liner.Add("handles.Add(s);");
+                liner.Add("return s;");            
+            });
+        }
 
-        var foreignProperties = GetForeignProperties(m);
-        var fields = m.Fields.Select(f => f.Name.ToLowerInvariant()).Select(argumentize);
-        var foreignIds = foreignProperties.Select(f => f.ToLowerInvariant() + "Id").Select(argumentize);
-        var all = fields.Concat(foreignIds);
-        return string.Join(" ", all);
-    }
+        private string GetCreatedSubscriptionFields(GeneratorConfig.ModelConfig m)
+        {
+            var foreignProperties = GetForeignProperties(m);
 
-    private string GetCreatedSubscriptionFields(GeneratorConfig.ModelConfig m)
-    {
-        var foreignProperties = GetForeignProperties(m);
+            var fields = new []{ "\"id\""}
+                .Concat(m.Fields.Select(f => "\"" + f.Name.ToLowerInvariant() + "\""))
+                .Concat(foreignProperties.Select(f => "\"" + f.ToLowerInvariant() + "Id\""));
 
-        var fields = new []{ "\"id\""}
-            .Concat(m.Fields.Select(f => "\"" + f.Name.ToLowerInvariant() + "\""))
-            .Concat(foreignProperties.Select(f => "\"" + f.ToLowerInvariant() + "Id\""));
-
-        return string.Join(", ", fields);
+            return string.Join(", ", fields);
+        }
     }
 }

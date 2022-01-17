@@ -28,7 +28,13 @@ public class ProjectGenerator : BaseGenerator
 
     public void ModifyDefaultFiles()
     {
-        var mf = ModifyFile(Config.Output.SourceFolder, "Startup");
+        ModifyStartupFile();
+        ModifyTestProjectFile();
+    }
+
+    private void ModifyStartupFile()
+    {
+        var mf = ModifyFile(Config.Output.SourceFolder, "Startup.cs");
         mf.AddUsing(Config.GenerateNamespace);
         mf.AddUsing("HotChocolate.AspNetCore");
 
@@ -47,6 +53,16 @@ public class ProjectGenerator : BaseGenerator
             "app.UseRouting();", 
             "app.UseWebSockets();",
             "Db.Context.Database.EnsureCreated();");
+
+        mf.Modify();
+    }
+
+    private void ModifyTestProjectFile()
+    {
+        var mf = ModifyFile(Config.Output.TestFolder, "test.csproj");
+        mf.ReplaceLine("<IsPackable>false</IsPackable>",
+            "<IsPackable>false</IsPackable>",
+            "<Nullable>enable</Nullable>");
 
         mf.Modify();
     }

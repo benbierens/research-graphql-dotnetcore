@@ -33,7 +33,7 @@ public class BaseGenerator
 
     public CodeFileModifier ModifyFile(string subfolder, string filename)
     {
-        var f = Path.Join(Config.Output.ProjectRoot, subfolder, filename + ".cs");
+        var f = Path.Join(Config.Output.ProjectRoot, subfolder, filename);
         return new CodeFileModifier(f);
     }
 
