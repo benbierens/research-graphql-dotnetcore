@@ -105,8 +105,8 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             var inputNames = GetInputTypeNames(m);
             AddCreateMutationMethod(cm, m, inputNames);
-            // delete,
             // update
+            // delete
         }
 
         private void AddCreateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, InputTypeNames inputNames)
@@ -116,6 +116,17 @@ public class BaseGqlTestClassGenerator : BaseGenerator
                 liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
                 liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
                 liner.Add("return data.Id;");
+            });
+        }
+
+        private void AddUpdateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, InputTypeNames inputNames)
+        {
+            cm.AddClosure("protected async Task<" + Config.IdType + "> Update" + m.Name + "(" + inputNames.Create + " input)", liner =>
+            {
+                this
+                // liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
+                // liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
+                // liner.Add("return data.Id;");
             });
         }
 
