@@ -1,5 +1,3 @@
-using System.IO;
-
 public class ReadmeGenerator : BaseGenerator
 {
     public ReadmeGenerator(GeneratorConfig config)
@@ -20,8 +18,10 @@ public class ReadmeGenerator : BaseGenerator
             liner.Add("## Run:");
             liner.Add("`dotnet run -p " + src + "`");
             liner.Add("## Test:");
+            liner.Add("### All:");
             liner.Add("`dotnet test " + test + "`");
-            liner.Add("`dotnet test " + test + " --filter TestCategory!=" + Config.Tests.TestCategory);
+            liner.Add("### Without GraphQL Tests:");
+            liner.Add("`dotnet test " + test + " --filter TestCategory!=" + Config.Tests.TestCategory + "`");
             liner.Add("## Build Release & Run Docker Image:");
             liner.Add("`dotnet publish " + src + " -c release`");
             liner.Add("`docker-compose up -d`");

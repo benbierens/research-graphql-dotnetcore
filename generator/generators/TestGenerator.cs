@@ -173,7 +173,7 @@ public class TestGenerator : BaseGenerator
 
     private string GetCreateMutationInput(GeneratorConfig.ModelConfig m)
     {
-        var argumentize = new Func<string, string>(f => f + ": \\\"\" + " + f + " + \"\\\"");
+        var argumentize = new Func<string, string>(f => f + ": \\\\\\\"\" + " + f + " + \"\\\\\\\"");
 
         var foreignProperties = GetForeignProperties(m);
         var fields = m.Fields.Select(f => f.Name.ToLowerInvariant()).Select(argumentize);

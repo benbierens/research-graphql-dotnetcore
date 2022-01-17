@@ -64,12 +64,6 @@ public class BaseGenerator
         MakeDir(arr);
     }
 
-    //public void WriteRawFile(params string[] filePath, string[] content)
-    //{
-    //    var arr = new[] { Config.Output.ProjectRoot }.Concat(filePath).ToArray();
-    //    File.WriteAllLines(Path.Combine(arr), content);
-    //}
-
     public void WriteRawFile(Action<Liner> onLiner, params string[] filePath)
     {
         var arr = new[] { Config.Output.ProjectRoot }.Concat(filePath).ToArray();
