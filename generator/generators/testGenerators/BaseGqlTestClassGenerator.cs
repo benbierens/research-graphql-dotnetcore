@@ -24,7 +24,6 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         cm.AddUsing("System.Net.Http");
         cm.AddUsing("System.Text");
         cm.AddUsing("System.Threading.Tasks");
-        cm.AddUsing("gqldemo_generated");
         cm.AddUsing("System.Collections.Generic");
         cm.AddUsing("Newtonsoft.Json");
 
@@ -104,14 +103,15 @@ public class BaseGqlTestClassGenerator : BaseGenerator
 
         public void AddMutationMethods(ClassMaker cm, GeneratorConfig.ModelConfig m)
         {
-            AddCreateMutationMethod(cm, m);
+            var inputNames = GetInputTypeNames(m);
+            AddCreateMutationMethod(cm, m, inputNames);
             // delete,
             // update
         }
 
-        private void AddCreateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+        private void AddCreateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, InputTypeNames inputNames)
         {
-            cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + GetCreateMutationArguments(m) + ")", liner =>
+            cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + inputNames.Create + " input)", liner =>
             {
                 liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
                 liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
@@ -119,24 +119,21 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             });
         }
 
-        private string GetCreateMutationArguments(GeneratorConfig.ModelConfig m)
-        {
-            var foreignProperties = GetForeignProperties(m);
-            var fields = m.Fields.Select(f => f.Type + " " + f.Name.ToLowerInvariant());
-            var foreignIds = foreignProperties.Select(f => Config.IdType + " " + f.ToLowerInvariant() + "Id");
-            var all = fields.Concat(foreignIds);
-            return string.Join(", ", all);
-        }
-
         private string GetCreateMutationInput(GeneratorConfig.ModelConfig m)
         {
-            var argumentize = new Func<string, string>(f => f + ": \\\\\\\"\" + " + f + " + \"\\\\\\\"");
+            var argumentize = new Func<string, string>(f => FirstToLower(f) + ": \\\\\\\"\" + input." + f + " + \"\\\\\\\"");
 
             var foreignProperties = GetForeignProperties(m);
-            var fields = m.Fields.Select(f => f.Name.ToLowerInvariant()).Select(argumentize);
-            var foreignIds = foreignProperties.Select(f => f.ToLowerInvariant() + "Id").Select(argumentize);
+            var fields = m.Fields.Select(f => f.Name).Select(argumentize);
+            var foreignIds = foreignProperties.Select(f => f + "Id").Select(argumentize);
             var all = fields.Concat(foreignIds);
             return string.Join(" ", all);
+        }
+
+        private string FirstToLower(string str)
+        {
+            if (string.IsNullOrEmpty(str) || char.IsLower(str[0])) return str;
+            return char.ToLower(str[0]) + str.Substring(1);
         }
     }
 

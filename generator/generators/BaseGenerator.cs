@@ -102,4 +102,14 @@ public class BaseGenerator
                 .Build();
         }
     }
+
+    public InputTypeNames GetInputTypeNames(GeneratorConfig.ModelConfig model)
+    {
+        return new InputTypeNames
+        {
+            Create = Config.GraphQl.GqlMutationsCreateMethod + model.Name + Config.GraphQl.GqlMutationsInputTypePostfix,
+            Update = Config.GraphQl.GqlMutationsUpdateMethod + model.Name + Config.GraphQl.GqlMutationsInputTypePostfix,
+            Delete = Config.GraphQl.GqlMutationsDeleteMethod + model.Name + Config.GraphQl.GqlMutationsInputTypePostfix
+        };
+    }
 }

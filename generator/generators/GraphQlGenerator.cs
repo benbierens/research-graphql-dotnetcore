@@ -108,23 +108,6 @@ public class GraphQlGenerator : BaseGenerator
         cm.AddBlankLine();
     }
 
-    private InputTypeNames GetInputTypeNames(GeneratorConfig.ModelConfig model)
-    {
-        return new InputTypeNames
-        {
-            Create = Config.GraphQl.GqlMutationsCreateMethod + model.Name + Config.GraphQl.GqlMutationsInputTypePostfix,
-            Update = Config.GraphQl.GqlMutationsUpdateMethod + model.Name + Config.GraphQl.GqlMutationsInputTypePostfix,
-            Delete = Config.GraphQl.GqlMutationsDeleteMethod + model.Name + Config.GraphQl.GqlMutationsInputTypePostfix
-        };
-    }
-
-    private class InputTypeNames
-    {
-        public string Create { get; set; }
-        public string Update { get; set; }
-        public string Delete { get; set; }
-    }
-
     private void AddCreateMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
     {
         cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsCreateMethod + model.Name +
