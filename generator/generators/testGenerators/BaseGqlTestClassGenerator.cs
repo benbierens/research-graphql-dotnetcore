@@ -105,15 +105,15 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             var inputNames = GetInputTypeNames(m);
             AddCreateMutationMethod(cm, m, inputNames);
-            // update
-            // delete
+            AddUpdateMutationMethod(cm, m, inputNames);
+            AddDeleteMutationMethod(cm, m, inputNames);
         }
 
         private void AddCreateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, InputTypeNames inputNames)
         {
             cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + inputNames.Create + " input)", liner =>
             {
-                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + FirstToLower(Config.GraphQl.GqlMutationsCreateMethod) +  m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
                 liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
                 liner.Add("return data.Id;");
             });
@@ -121,12 +121,42 @@ public class BaseGqlTestClassGenerator : BaseGenerator
 
         private void AddUpdateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, InputTypeNames inputNames)
         {
-            cm.AddClosure("protected async Task<" + Config.IdType + "> Update" + m.Name + "(" + inputNames.Create + " input)", liner =>
+            cm.AddClosure("protected async Task<" + Config.IdType + "> Update" + m.Name + "(" + inputNames.Update + " input)", liner =>
             {
-                this
-                // liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { create" + m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
-                // liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
-                // liner.Add("return data.Id;");
+                liner.Add("var fields = \"" + FirstToLower(m.Name) + "Id: \" + input." + m.Name + "Id;");
+                foreach (var f in m.Fields)
+                {
+                    if (RequiresQuotes(f.Type))
+                    {
+                        liner.Add("if (input." + f.Name + " != null) fields += \" " + FirstToLower(f.Name) + ": \\\"\" + input." + f.Name + " + \"\\\"\";");
+                    }
+                    else
+                    {
+                        liner.Add("if (input." + f.Name + " != null) fields += \" " + FirstToLower(f.Name) + ": \" + input." + f.Name + ";");
+                    }
+                }
+                var foreignProperties = GetForeignProperties(m);
+                foreach (var f in foreignProperties)
+                {
+                    liner.Add("if (input." + f + "Id != null) fields += \" " + FirstToLower(f) + "Id: \" + input." + f + "Id;");
+                }
+
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + FirstToLower(Config.GraphQl.GqlMutationsUpdateMethod) + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
+                liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
+                liner.Add("return data.Id;");
+            });
+        }
+
+        private void AddDeleteMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, InputTypeNames inputNames)
+        {
+            cm.AddClosure("protected async Task<" + Config.IdType + "> Delete" + m.Name + "(" + inputNames.Delete + " input)", liner =>
+            {
+                //deleteCat(input: { catId: 1 }) { id }
+
+                var fields = FirstToLower(m.Name) + "Id: \" + input." + m.Name + "Id + \"";
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + FirstToLower(Config.GraphQl.GqlMutationsDeleteMethod) +  m.Name + "(input: {" + fields + "}) { id } }\\\"}\";");
+                liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
+                liner.Add("return data.Id;");
             });
         }
 
@@ -145,6 +175,11 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             if (string.IsNullOrEmpty(str) || char.IsLower(str[0])) return str;
             return char.ToLower(str[0]) + str.Substring(1);
+        }
+
+        private bool RequiresQuotes(string type)
+        {
+            return type == "string";
         }
     }
 
