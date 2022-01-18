@@ -68,7 +68,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             liner.Add("return result.Data;");
         });
 
-        cm.AddClosure("protected async Task<SubscriptionHandle<T>> SubscribeTo<T>(string modelName, params string[] fields)", liner =>
+        cm.AddClosure("private async Task<SubscriptionHandle<T>> SubscribeTo<T>(string modelName, params string[] fields)", liner =>
         {
             liner.Add("var s = new SubscriptionHandle<T>(modelName, fields);");
             liner.Add("await s.Subscribe();");
