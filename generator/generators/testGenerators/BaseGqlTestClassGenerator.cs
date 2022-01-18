@@ -67,6 +67,14 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             liner.Add("if (result.Data == null) throw new Exception(\"GraphQl operation failed.\");");
             liner.Add("return result.Data;");
         });
+
+        cm.AddClosure("protected async Task<SubscriptionHandle<T>> SubscribeTo<T>(string modelName, params string[] fields)", liner =>
+        {
+            liner.Add("var s = new SubscriptionHandle<T>(modelName, fields);");
+            liner.Add("await s.Subscribe();");
+            liner.Add("handles.Add(s);");
+            liner.Add("return s;");
+        });
     }
     
     public class QueryAllMethodSubgenerator : BaseGenerator
@@ -80,7 +88,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             cm.AddClosure("protected async Task<List<" + m.Name + ">> QueryAll" + m.Name + "s()", liner =>
             {
-                liner.Add("var query = \"{ \\\"query\\\": \\\"query { " + m.Name.ToLowerInvariant() + "s { " + GetQueryFields(m) +" } } \\\" }\";");
+                liner.Add("var query = \"{ \\\"query\\\": \\\"query { " + m.Name.FirstToLower() + "s { " + GetQueryFields(m) +" } } \\\" }\";");
                 liner.Add("var data = await PostRequest<All" + m.Name + "sQuery>(query);");
                 liner.Add("return data." + m.Name + "s;");
             });
@@ -89,8 +97,8 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         private string GetQueryFields(GeneratorConfig.ModelConfig m)
         {
             var foreignProperties = GetForeignProperties(m);
-            var foreignIds = string.Join(" ", foreignProperties.Select(f => f.ToLowerInvariant() + "Id"));
-            return "id " + string.Join(" ", m.Fields.Select(f => f.Name.ToLowerInvariant())) + " " + foreignIds;
+            var foreignIds = string.Join(" ", foreignProperties.Select(f => f.FirstToLower() + "Id"));
+            return "id " + string.Join(" ", m.Fields.Select(f => f.Name.FirstToLower())) + " " + foreignIds;
         }
     }
 
@@ -113,7 +121,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + inputNames.Create + " input)", liner =>
             {
-                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + FirstToLower(Config.GraphQl.GqlMutationsCreateMethod) +  m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsCreateMethod.FirstToLower() +  m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
                 liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
                 liner.Add("return data.Id;");
             });
@@ -123,25 +131,25 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             cm.AddClosure("protected async Task<" + Config.IdType + "> Update" + m.Name + "(" + inputNames.Update + " input)", liner =>
             {
-                liner.Add("var fields = \"" + FirstToLower(m.Name) + "Id: \" + input." + m.Name + "Id;");
+                liner.Add("var fields = \"" + m.Name.FirstToLower() + "Id: \" + input." + m.Name + "Id;");
                 foreach (var f in m.Fields)
                 {
                     if (RequiresQuotes(f.Type))
                     {
-                        liner.Add("if (input." + f.Name + " != null) fields += \" " + FirstToLower(f.Name) + ": \\\"\" + input." + f.Name + " + \"\\\"\";");
+                        liner.Add("if (input." + f.Name + " != null) fields += \" " + m.Name.FirstToLower() + ": \\\"\" + input." + f.Name + " + \"\\\"\";");
                     }
                     else
                     {
-                        liner.Add("if (input." + f.Name + " != null) fields += \" " + FirstToLower(f.Name) + ": \" + input." + f.Name + ";");
+                        liner.Add("if (input." + f.Name + " != null) fields += \" " + m.Name.FirstToLower() + ": \" + input." + f.Name + ";");
                     }
                 }
                 var foreignProperties = GetForeignProperties(m);
                 foreach (var f in foreignProperties)
                 {
-                    liner.Add("if (input." + f + "Id != null) fields += \" " + FirstToLower(f) + "Id: \" + input." + f + "Id;");
+                    liner.Add("if (input." + f + "Id != null) fields += \" " + f.FirstToLower() + "Id: \" + input." + f + "Id;");
                 }
 
-                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + FirstToLower(Config.GraphQl.GqlMutationsUpdateMethod) + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsUpdateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
                 liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
                 liner.Add("return data.Id;");
             });
@@ -153,8 +161,8 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             {
                 //deleteCat(input: { catId: 1 }) { id }
 
-                var fields = FirstToLower(m.Name) + "Id: \" + input." + m.Name + "Id + \"";
-                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + FirstToLower(Config.GraphQl.GqlMutationsDeleteMethod) +  m.Name + "(input: {" + fields + "}) { id } }\\\"}\";");
+                var fields = m.Name.FirstToLower() + "Id: \" + input." + m.Name + "Id + \"";
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsDeleteMethod.FirstToLower() +  m.Name + "(input: {" + fields + "}) { id } }\\\"}\";");
                 liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
                 liner.Add("return data.Id;");
             });
@@ -162,19 +170,13 @@ public class BaseGqlTestClassGenerator : BaseGenerator
 
         private string GetCreateMutationInput(GeneratorConfig.ModelConfig m)
         {
-            var argumentize = new Func<string, string>(f => FirstToLower(f) + ": \\\\\\\"\" + input." + f + " + \"\\\\\\\"");
+            var argumentize = new Func<string, string>(f => f.FirstToLower() + ": \\\\\\\"\" + input." + f + " + \"\\\\\\\"");
 
             var foreignProperties = GetForeignProperties(m);
             var fields = m.Fields.Select(f => f.Name).Select(argumentize);
             var foreignIds = foreignProperties.Select(f => f + "Id").Select(argumentize);
             var all = fields.Concat(foreignIds);
             return string.Join(" ", all);
-        }
-
-        private string FirstToLower(string str)
-        {
-            if (string.IsNullOrEmpty(str) || char.IsLower(str[0])) return str;
-            return char.ToLower(str[0]) + str.Substring(1);
         }
 
         private bool RequiresQuotes(string type)
@@ -192,20 +194,17 @@ public class BaseGqlTestClassGenerator : BaseGenerator
 
         public void AddSubscribeMethods(ClassMaker cm, GeneratorConfig.ModelConfig m)
         {
-            AddSubscribeCreatedMethod(cm, m);
-            // updated
-            // deleted
+            AddSubscribeCreatedMethod(cm, m, Config.GraphQl.GqlSubscriptionCreatedMethod);
+            AddSubscribeCreatedMethod(cm, m, Config.GraphQl.GqlSubscriptionUpdatedMethod);
+            AddSubscribeCreatedMethod(cm, m, Config.GraphQl.GqlSubscriptionDeletedMethod);
         }
         
-        private void AddSubscribeCreatedMethod(ClassMaker cm, GeneratorConfig.ModelConfig m)
+        private void AddSubscribeCreatedMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, string methodName)
         {
-            cm.AddClosure("protected async Task<SubscriptionHandle<" + m.Name + ">> SubscribeTo" + m.Name + Config.GraphQl.GqlSubscriptionCreatedMethod + "()", liner =>
+            cm.AddClosure("protected async Task<SubscriptionHandle<" + m.Name + ">> SubscribeTo" + m.Name + methodName + "()", liner =>
             {
                 var fields = GetCreatedSubscriptionFields(m);
-                liner.Add("var s = new SubscriptionHandle<" + m.Name + ">(\"" + m.Name.ToLowerInvariant() + Config.GraphQl.GqlSubscriptionCreatedMethod + "\", " + fields + ");");
-                liner.Add("await s.Subscribe();");
-                liner.Add("handles.Add(s);");
-                liner.Add("return s;");            
+                liner.Add("return await SubscribeTo<" + m.Name + ">(\"" + m.Name.FirstToLower() + methodName + "\", " + fields + ");");
             });
         }
 
@@ -214,8 +213,8 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             var foreignProperties = GetForeignProperties(m);
 
             var fields = new []{ "\"id\""}
-                .Concat(m.Fields.Select(f => "\"" + f.Name.ToLowerInvariant() + "\""))
-                .Concat(foreignProperties.Select(f => "\"" + f.ToLowerInvariant() + "Id\""));
+                .Concat(m.Fields.Select(f => "\"" + f.Name.FirstToLower() + "\""))
+                .Concat(foreignProperties.Select(f => "\"" + f.FirstToLower() + "Id\""));
 
             return string.Join(", ", fields);
         }

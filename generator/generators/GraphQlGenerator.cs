@@ -102,7 +102,7 @@ public class GraphQlGenerator : BaseGenerator
     private void AddSubscriptionMethod(ClassMaker cm, string modelName, string method)
     {
         var n = modelName;
-        var l = n.ToLowerInvariant();
+        var l = n.FirstToLower();
         cm.AddLine("[Subscribe]");
         cm.AddLine("public " + n + " " + n + method + "([EventMessage] " + n + " _" + l + ") => _" + l + ";");
         cm.AddBlankLine();
