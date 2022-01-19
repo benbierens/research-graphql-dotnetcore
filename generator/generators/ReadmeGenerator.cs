@@ -25,6 +25,9 @@ public class ReadmeGenerator : BaseGenerator
             liner.Add("## Build Release & Run Docker Image:");
             liner.Add("`dotnet publish " + src + " -c release`");
             liner.Add("`docker-compose up -d`");
+            liner.Add("## Migrate the database");
+            liner.Add("`cd " + Config.Output.SourceFolder + "`");
+            liner.Add("`dotnet ef database update`");
         }, "Readme.md");
     }
 }

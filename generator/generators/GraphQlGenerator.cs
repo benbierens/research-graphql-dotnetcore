@@ -210,9 +210,19 @@ public class GraphQlGenerator : BaseGenerator
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            cm.AddProperty(f.WithId)
-                .IsType(Config.IdType)
-                .Build();
+            if (IsSelfReference(model, f.Type))
+            {
+                cm.AddProperty(f.WithId)
+                    .IsType(Config.IdType)
+                    .IsNullable()
+                    .Build();
+            }
+            else
+            {
+                cm.AddProperty(f.WithId)
+                    .IsType(Config.IdType)
+                    .Build();
+            }
         }
     }
 

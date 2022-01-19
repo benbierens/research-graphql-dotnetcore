@@ -85,9 +85,20 @@ public class BaseGenerator
         return fp.Select(f => new ForeignProperty
         {
             Type = f,
-            Name = Config.NavigationPropertyPrefix + f,
-            WithId = Config.NavigationPropertyPrefix + f + "Id"
+            Name = GetForeignPropertyPrefix(model, f) + f,
+            WithId = GetForeignPropertyPrefix(model, f) + f + "Id"
         }).ToArray();
+    }
+
+    private string GetForeignPropertyPrefix(GeneratorConfig.ModelConfig m, string hasManyEntry)
+    {
+        if (IsSelfReference(m, hasManyEntry)) return Config.SelfRefNavigationPropertyPrefix;
+        return "";
+    }
+
+    public bool IsSelfReference(GeneratorConfig.ModelConfig model, string hasManyEntry)
+    {
+        return hasManyEntry == model.Name;
     }
 
     public void RunCommand(string cmd, params string[] args)

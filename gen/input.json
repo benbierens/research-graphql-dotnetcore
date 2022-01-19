@@ -1,129 +1,141 @@
 {
-    "config": {
-        "generateNamespace": "gqldemo_generated",
-        "idType": "int",
-        "navigationPropertyPrefix": "Parent",
-        "packages": [
-            "Microsoft.EntityFrameworkCore --version 5.0.13",
-            "Microsoft.EntityFrameworkCore.Design --version 5.0.13",
-            "Microsoft.EntityFrameworkCore.SqlServer --version 5.0.13",
-            "Microsoft.EntityFrameworkCore.Proxies --version 5.0.13",
-            "HotChocolate.AspNetCore",
-            "HotChocolate.AspNetCore.Subscriptions",
-            "HotChocolate.AspNetCore.Playground",
-            "HotChocolate.Subscriptions",
-            "HotChocolate.Subscriptions.InMemory",
-            "Npgsql.EntityFrameworkCore.PostgreSQL --version 5.0.10"
-        ],
-        "output": {
-            "projectRoot": "../demo",
-            "sourceFolder": "src",
-            "testFolder": "test",
-            "generatedFolder": "generated",
-            "dtoSubFolder": "dto",
-            "databaseSubFolder": "db",
-            "graphQlSubFolder": "gql"
-        },
-        "Database": {
-            "dbContextClassName": "DatabaseContext",
-            "dbAccesserClassName": "Db",
-            "dbContextFileName": "DatabaseContext",
-            "dbContainerName": "db",
-            "localDev": {
-                "dbHost": "localhost",
-                "dbName": "graphqlee",
-                "dbUsername": "postgres",
-                "dbPassword": "admin"
-            },
-            "docker": {
-                "dbName": "graphqlee",
-                "dbUsername": "postgres",
-                "dbPassword": "admin_password_please"
-            }
-        },
-        "GraphQl": {
-            "gqlTypesFileName": "GraphQlTypes",
-            "gqlQueriesClassName": "Queries",
-            "gqlQueriesFileName": "Queries",
-            "gqlMutationsClassName": "Mutations",
-            "gqlMutationsFilename": "Mutations",
-            "gqlMutationsInputTypePostfix": "Input",
-            "gqlMutationsCreateMethod": "Create",
-            "gqlMutationsUpdateMethod": "Update",
-            "gqlMutationsDeleteMethod": "Delete",
-            "gqlSubscriptionsClassName": "Subscriptions",
-            "gqlSubscriptionsFilename": "Subscriptions",
-            "gqlSubscriptionCreatedMethod": "Created",
-            "gqlSubscriptionUpdatedMethod": "Updated",
-            "gqlSubscriptionDeletedMethod": "Deleted"
-        },
-        "Tests": {
-            "testCategory": "GraphQlTests",
-            "subFolder": "graphQlTests"
-        }
+  "config": {
+    "generateNamespace": "gqldemo_generated",
+    "idType": "int",
+    "selfRefNavigationPropertyPrefix": "Parent",
+    "packages": [
+      "Microsoft.EntityFrameworkCore --version 5.0.13",
+      "Microsoft.EntityFrameworkCore.Design --version 5.0.13",
+      "Microsoft.EntityFrameworkCore.SqlServer --version 5.0.13",
+      "Microsoft.EntityFrameworkCore.Proxies --version 5.0.13",
+      "HotChocolate.AspNetCore",
+      "HotChocolate.AspNetCore.Subscriptions",
+      "HotChocolate.AspNetCore.Playground",
+      "HotChocolate.Subscriptions",
+      "HotChocolate.Subscriptions.InMemory",
+      "Npgsql.EntityFrameworkCore.PostgreSQL --version 5.0.10"
+    ],
+    "output": {
+      "projectRoot": "../demo",
+      "sourceFolder": "src",
+      "testFolder": "test",
+      "generatedFolder": "generated",
+      "dtoSubFolder": "dto",
+      "databaseSubFolder": "db",
+      "graphQlSubFolder": "gql"
     },
-    "models": [
+    "Database": {
+      "dbContextClassName": "DatabaseContext",
+      "dbAccesserClassName": "Db",
+      "dbContextFileName": "DatabaseContext",
+      "dbContainerName": "db",
+      "localDev": {
+        "dbHost": "localhost",
+        "dbName": "graphqlee",
+        "dbUsername": "postgres",
+        "dbPassword": "admin"
+      },
+      "docker": {
+        "dbName": "graphqlee",
+        "dbUsername": "postgres",
+        "dbPassword": "admin_password_please"
+      }
+    },
+    "GraphQl": {
+      "gqlTypesFileName": "GraphQlTypes",
+      "gqlQueriesClassName": "Queries",
+      "gqlQueriesFileName": "Queries",
+      "gqlMutationsClassName": "Mutations",
+      "gqlMutationsFilename": "Mutations",
+      "gqlMutationsInputTypePostfix": "Input",
+      "gqlMutationsCreateMethod": "Create",
+      "gqlMutationsUpdateMethod": "Update",
+      "gqlMutationsDeleteMethod": "Delete",
+      "gqlSubscriptionsClassName": "Subscriptions",
+      "gqlSubscriptionsFilename": "Subscriptions",
+      "gqlSubscriptionCreatedMethod": "Created",
+      "gqlSubscriptionUpdatedMethod": "Updated",
+      "gqlSubscriptionDeletedMethod": "Deleted"
+    },
+    "Tests": {
+      "testCategory": "GraphQlTests",
+      "subFolder": "graphQlTests"
+    }
+  },
+  "models": [
+    {
+      "name": "Cat",
+      "fields": [
         {
-            "name": "Cat",
-            "fields": [
-                {
-                    "name": "Name",
-                    "type": "string"
-                },
-                {
-                    "name": "Age",
-                    "type": "int"
-                }
-            ],
-            "hasMany": [
-                "CatToy"
-            ]
+          "name": "Name",
+          "type": "string"
         },
         {
-            "name": "Couch",
-            "fields": [
-                {
-                    "name": "Location",
-                    "type": "string"
-                }
-            ],
-            "hasMany": [
-                "Cat"
-            ]
-        },
-        {
-            "name": "CatToy",
-            "fields": [
-                {
-                    "name": "Score",
-                    "type": "int"
-                }
-            ]
-        },
-        {
-            "name": "Toy",
-            "fields": [
-                {
-                    "name": "Label",
-                    "type": "string"
-                }
-            ],
-            "hasMany": [
-                "CatToy"
-            ]
-        },
-        {
-            "name": "Module",
-            "fields": [
-                {
-                    "name": "CreatedUtc",
-                    "type": "string"
-                }
-            ],
-            "hasMany": [
-                "Cat",
-                "Module"
-            ]
+          "name": "Age",
+          "type": "int"
         }
-    ]
+      ],
+      "hasMany": [
+        "CatToy"
+      ]
+    },
+    {
+      "name": "Couch",
+      "fields": [
+        {
+          "name": "Location",
+          "type": "string"
+        }
+      ],
+      "hasMany": [
+        "Cat"
+      ]
+    },
+    {
+      "name": "CatToy",
+      "fields": [
+        {
+          "name": "Score",
+          "type": "int"
+        }
+      ]
+    },
+    {
+      "name": "Toy",
+      "fields": [
+        {
+          "name": "Label",
+          "type": "string"
+        }
+      ],
+      "hasMany": [
+        "CatToy"
+      ]
+    },
+    {
+      "name": "Module",
+      "fields": [
+        {
+          "name": "CreatedUtc",
+          "type": "string"
+        }
+      ],
+      "hasMany": [
+        "Cat",
+        "Module"
+      ]
+    },
+    {
+      "name": "Super",
+      "fields": [
+        {
+          "name": "Author",
+          "type": "string"
+        }
+      ],
+      "hasMany": [
+        "Module"
+      ]
+    }
+  ]
 }

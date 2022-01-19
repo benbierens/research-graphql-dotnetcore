@@ -40,16 +40,41 @@ public class DtoGenerator : BaseGenerator
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            todo: these fields need to be nullable for self-references.
-            cm.AddProperty(f.WithId)
-                .IsType(Config.IdType)
-                .Build();
-
-            cm.AddProperty(f.Name)
-                .WithModifier("virtual")
-                .IsType(f.Type)
-                .InitializeAsExplicitNull()
-                .Build();
+            if (IsSelfReference(model, f.Type))
+            {
+                AddNullableForeignProperties(cm, f);
+            }
+            else
+            {
+                AddExplicitForeignProperties(cm, f);
+            }
         }
+    }
+
+    private void AddExplicitForeignProperties(ClassMaker cm, ForeignProperty f)
+    {
+        cm.AddProperty(f.WithId)
+            .IsType(Config.IdType)
+            .Build();
+
+        cm.AddProperty(f.Name)
+            .WithModifier("virtual")
+            .IsType(f.Type)
+            .InitializeAsExplicitNull()
+            .Build();
+    }
+
+    private void AddNullableForeignProperties(ClassMaker cm, ForeignProperty f)
+    {
+        cm.AddProperty(f.WithId)
+            .IsType(Config.IdType)
+            .IsNullable()
+            .Build();
+
+        cm.AddProperty(f.Name)
+            .WithModifier("virtual")
+            .IsType(f.Type)
+            .IsNullable()
+            .Build();
     }
 }

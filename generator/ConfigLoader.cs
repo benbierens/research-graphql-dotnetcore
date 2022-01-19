@@ -45,7 +45,7 @@ public class GeneratorConfig
         public ConfigGraphQlSection GraphQl { get; set; }
         public ConfigTestSection Tests { get; set; }
         public string IdType { get; set; }
-        public string NavigationPropertyPrefix { get; set; }
+        public string SelfRefNavigationPropertyPrefix { get; set; }
         public string[] Packages { get; set; }
     }
 
