@@ -54,12 +54,12 @@ public class ClassMaker
         attributes.Add(attribute);
     }
 
-    public void AddClosure(string name, Action<Liner> inClosure)
+    public void AddClosure(string name, Action<Liner> inClosure, string additionalPostfix = "")
     {
         var liner = new Liner();
         liner.StartClosure(name);
         inClosure(liner);
-        liner.EndClosure();
+        liner.EndClosure(additionalPostfix);
         
         lines.AddRange(liner.GetLines());
     }

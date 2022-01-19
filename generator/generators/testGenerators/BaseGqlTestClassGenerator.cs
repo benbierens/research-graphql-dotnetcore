@@ -36,6 +36,12 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         cm.AddLine("private readonly List<ISubscriptionHandle> handles = new List<ISubscriptionHandle>();");
 
         cm.AddBlankLine();
+        cm.AddLine("[SetUp]");
+        cm.AddClosure("public void GqlSetUp()", liner => 
+        {
+            liner.Add("TestData = new TestData();");
+        });
+
         cm.AddLine("[TearDown]");
         cm.AddClosure("public async Task GqlTearDown()", liner => 
         {
@@ -44,6 +50,10 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             liner.EndClosure();
             liner.Add("handles.Clear();");
         });
+
+        cm.AddProperty("TestData")
+            .IsType("TestData")
+            .Build();
 
         AddModelMethods(cm);
 
