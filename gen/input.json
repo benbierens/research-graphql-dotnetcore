@@ -2,6 +2,7 @@
     "config": {
         "generateNamespace": "gqldemo_generated",
         "idType": "int",
+        "navigationPropertyPrefix": "Parent",
         "packages": [
             "Microsoft.EntityFrameworkCore --version 5.0.13",
             "Microsoft.EntityFrameworkCore.Design --version 5.0.13",
@@ -109,6 +110,19 @@
             ],
             "hasMany": [
                 "CatToy"
+            ]
+        },
+        {
+            "name": "Module",
+            "fields": [
+                {
+                    "name": "CreatedUtc",
+                    "type": "string"
+                }
+            ],
+            "hasMany": [
+                "Cat",
+                "Module"
             ]
         }
     ]

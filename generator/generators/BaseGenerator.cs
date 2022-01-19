@@ -78,9 +78,16 @@ public class BaseGenerator
         File.Delete(Path.Join(arr));
     }
 
-    public string[] GetForeignProperties(GeneratorConfig.ModelConfig model)
+    public ForeignProperty[] GetForeignProperties(GeneratorConfig.ModelConfig model)
     {
-        return Models.Where(m => m.HasMany != null && m.HasMany.Contains(model.Name)).Select(m => m.Name).ToArray();
+        var fp = Models.Where(m => m.HasMany != null && m.HasMany.Contains(model.Name)).Select(m => m.Name).ToArray();
+
+        return fp.Select(f => new ForeignProperty
+        {
+            Type = f,
+            Name = Config.NavigationPropertyPrefix + f,
+            WithId = Config.NavigationPropertyPrefix + f + "Id"
+        }).ToArray();
     }
 
     public void RunCommand(string cmd, params string[] args)

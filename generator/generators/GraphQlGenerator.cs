@@ -165,7 +165,7 @@ public class GraphQlGenerator : BaseGenerator
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            liner.Add(f + "Id = " + inputName + "." + f + "Id,");
+            liner.Add(f.WithId + " = " + inputName + "." + f.WithId + ",");
         }
     }
 
@@ -185,7 +185,7 @@ public class GraphQlGenerator : BaseGenerator
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            AddAssignmentLine(liner, Config.IdType, f + "Id", inputName);
+            AddAssignmentLine(liner, Config.IdType, f.WithId, inputName);
         }
     }
 
@@ -210,7 +210,7 @@ public class GraphQlGenerator : BaseGenerator
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            cm.AddProperty(f + "Id")
+            cm.AddProperty(f.WithId)
                 .IsType(Config.IdType)
                 .Build();
         }
@@ -221,7 +221,7 @@ public class GraphQlGenerator : BaseGenerator
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            cm.AddProperty(f + "Id")
+            cm.AddProperty(f.WithId)
                 .IsType(Config.IdType)
                 .IsNullable()
                 .Build();

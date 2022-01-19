@@ -107,7 +107,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         private string GetQueryFields(GeneratorConfig.ModelConfig m)
         {
             var foreignProperties = GetForeignProperties(m);
-            var foreignIds = string.Join(" ", foreignProperties.Select(f => f.FirstToLower() + "Id"));
+            var foreignIds = string.Join(" ", foreignProperties.Select(f => f.WithId.FirstToLower()));
             return "id " + string.Join(" ", m.Fields.Select(f => f.Name.FirstToLower())) + " " + foreignIds;
         }
     }
@@ -156,7 +156,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
                 var foreignProperties = GetForeignProperties(m);
                 foreach (var f in foreignProperties)
                 {
-                    liner.Add("if (input." + f + "Id != null) fields += \" " + f.FirstToLower() + "Id: \" + input." + f + "Id;");
+                    liner.Add("if (input." + f.WithId + " != null) fields += \" " + f.WithId.FirstToLower() + ": \" + input." + f.WithId + ";");
                 }
 
                 liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsUpdateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
@@ -169,8 +169,6 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             cm.AddClosure("protected async Task<" + Config.IdType + "> Delete" + m.Name + "(" + inputNames.Delete + " input)", liner =>
             {
-                //deleteCat(input: { catId: 1 }) { id }
-
                 var fields = m.Name.FirstToLower() + "Id: \" + input." + m.Name + "Id + \"";
                 liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsDeleteMethod.FirstToLower() +  m.Name + "(input: {" + fields + "}) { id } }\\\"}\";");
                 liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
@@ -184,7 +182,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
 
             var foreignProperties = GetForeignProperties(m);
             var fields = m.Fields.Select(f => f.Name).Select(argumentize);
-            var foreignIds = foreignProperties.Select(f => f + "Id").Select(argumentize);
+            var foreignIds = foreignProperties.Select(f => f.WithId).Select(argumentize);
             var all = fields.Concat(foreignIds);
             return string.Join(" ", all);
         }
@@ -221,10 +219,9 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         private string GetCreatedSubscriptionFields(GeneratorConfig.ModelConfig m)
         {
             var foreignProperties = GetForeignProperties(m);
-
             var fields = new []{ "\"id\""}
                 .Concat(m.Fields.Select(f => "\"" + f.Name.FirstToLower() + "\""))
-                .Concat(foreignProperties.Select(f => "\"" + f.FirstToLower() + "Id\""));
+                .Concat(foreignProperties.Select(f => "\"" + f.WithId.FirstToLower() + "\""));
 
             return string.Join(", ", fields);
         }
