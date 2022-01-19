@@ -18,9 +18,6 @@ public class TestDataClassGenerator : BaseGenerator
 
     public void CreateTestDataClass()
     {
-        Console.WriteLine("Todo: Constructor generator is infinite loop for self-referencing types.");
-        return;
-        
         var fm = StartTestFile("TestData");
         var cm = fm.AddClass("TestData");
 
@@ -67,7 +64,7 @@ public class TestDataClassGenerator : BaseGenerator
     private bool CanInitialize(GeneratorConfig.ModelConfig m, List<string> initialized)
     {
         var foreign = GetForeignProperties(m);
-        return foreign.All(f => initialized.Contains(f.Name));
+        return foreign.All(f => f.IsSelfReference || initialized.Contains(f.Name));
     }
 
     private void InitializeModel(Liner liner, GeneratorConfig.ModelConfig m)
@@ -81,8 +78,11 @@ public class TestDataClassGenerator : BaseGenerator
         }
         foreach (var f in foreign)
         {
-            liner.Add(f + " = Test" + f.Name + ",");
-            liner.Add(f + "Id = Test" + f.Name + ".Id,");
+            if (!f.IsSelfReference)
+            {
+                liner.Add(f.Name + " = Test" + f.Name + ",");
+                liner.Add(f.WithId + " = Test" + f.Name + ".Id,");
+            }
         }
         liner.EndClosure(";");
     }

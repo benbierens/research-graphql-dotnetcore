@@ -86,7 +86,9 @@ public class BaseGenerator
         {
             Type = f,
             Name = GetForeignPropertyPrefix(model, f) + f,
-            WithId = GetForeignPropertyPrefix(model, f) + f + "Id"
+            WithId = GetForeignPropertyPrefix(model, f) + f + "Id",
+            IsSelfReference = IsSelfReference(model, f)
+
         }).ToArray();
     }
 
@@ -96,7 +98,7 @@ public class BaseGenerator
         return "";
     }
 
-    public bool IsSelfReference(GeneratorConfig.ModelConfig model, string hasManyEntry)
+    private bool IsSelfReference(GeneratorConfig.ModelConfig model, string hasManyEntry)
     {
         return hasManyEntry == model.Name;
     }

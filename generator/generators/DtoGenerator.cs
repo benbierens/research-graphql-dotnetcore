@@ -40,7 +40,7 @@ public class DtoGenerator : BaseGenerator
         var foreignProperties = GetForeignProperties(model);
         foreach (var f in foreignProperties)
         {
-            if (IsSelfReference(model, f.Type))
+            if (f.IsSelfReference)
             {
                 AddNullableForeignProperties(cm, f);
             }
