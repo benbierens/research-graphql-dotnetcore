@@ -31,8 +31,45 @@ public class DtoGenerator : BaseGenerator
             }
             AddForeignProperties(cm, model);
 
+            cm.AddBlankLine();
+            AddConvertMethods(cm, model);
+
             fm.Build();
         }
+    }
+
+    private void AddConvertMethods(ClassMaker cm, GeneratorConfig.ModelConfig model)
+    {
+        var inputTypes = GetInputTypeNames(model);
+
+        AddConvertMethod(cm, model, inputTypes.Create, Config.GraphQl.GqlMutationsCreateMethod);
+        AddConvertMethod(cm, model, inputTypes.Update, Config.GraphQl.GqlMutationsUpdateMethod, model.Name + "Id = Id,");
+
+        cm.AddClosure("public " + inputTypes.Delete + " To" + Config.GraphQl.GqlMutationsDeleteMethod + "()", liner =>
+        {
+            liner.StartClosure("return new " + inputTypes.Delete);
+            liner.Add(model.Name + "Id = Id,");
+            liner.EndClosure(";");
+        });
+    }
+
+    private void AddConvertMethod(ClassMaker cm, GeneratorConfig.ModelConfig model, string inputType, string mutationMethod, string firstLine = "")
+    {
+        cm.AddClosure("public " + inputType + " To" + mutationMethod + "()", liner =>
+        {
+            liner.StartClosure("return new " + inputType);
+            if (!string.IsNullOrWhiteSpace(firstLine)) liner.Add(firstLine);
+            foreach (var f in model.Fields)
+            {
+                liner.Add(f.Name + " = " + f.Name + ",");
+            }
+            var foreignProperties = GetForeignProperties(model);
+            foreach (var f in foreignProperties)
+            {
+                liner.Add(f.WithId + " = " + f.WithId + ",");
+            }
+            liner.EndClosure(";");
+        });
     }
 
     private void AddForeignProperties(ClassMaker cm, GeneratorConfig.ModelConfig model)
