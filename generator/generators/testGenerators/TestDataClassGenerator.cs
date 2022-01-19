@@ -6,12 +6,14 @@ public class TestDataClassGenerator : BaseGenerator
 {
     private int dummyInt;
     private float dummyFloat;
+    private double dummyDouble;
 
     public TestDataClassGenerator(GeneratorConfig config)
         : base(config)
     {
         dummyInt = 10000;
         dummyFloat = 10000.0f;
+        dummyDouble = 10000.0;
     }
 
     public void CreateTestDataClass()
@@ -94,6 +96,8 @@ public class TestDataClassGenerator : BaseGenerator
         if (type == "int") return DummyInt();
         if (type == "float") return DummyFloat();
         if (type == "string") return DummyString(m, type);
+        if (type == "double") return DummyDouble();
+        if (type == "bool") return "true";
         throw new Exception("Unknown type: " + type);
     }
 
@@ -111,5 +115,11 @@ public class TestDataClassGenerator : BaseGenerator
     {
         dummyFloat += 0.1f;
         return dummyFloat.ToString();
+    }
+
+    private string DummyDouble()
+    {
+        dummyDouble += 0.1;
+        return dummyDouble.ToString();
     }
 }
