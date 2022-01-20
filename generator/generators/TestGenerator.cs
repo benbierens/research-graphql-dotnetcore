@@ -6,6 +6,7 @@ public class TestGenerator : BaseGenerator
     private readonly DockerControllerClassGenerator dockerControllerClassGenerator;
     private readonly QueryClassGenerator queryClassGenerator;
     private readonly TestDataClassGenerator testDataClassGenerator;
+    private readonly ConverterClassGenerator converterClassGenerator;
 
     public TestGenerator(GeneratorConfig config)
         : base(config)
@@ -15,6 +16,7 @@ public class TestGenerator : BaseGenerator
         dockerControllerClassGenerator = new DockerControllerClassGenerator(config);
         queryClassGenerator = new QueryClassGenerator(config);
         testDataClassGenerator = new TestDataClassGenerator(config);
+        converterClassGenerator = new ConverterClassGenerator(config);
     }
 
     public void GenerateTests()
@@ -26,5 +28,6 @@ public class TestGenerator : BaseGenerator
         dockerControllerClassGenerator.CreateDockerControllerClass();
         queryClassGenerator.CreateQueryClasses();
         testDataClassGenerator.CreateTestDataClass();
+        converterClassGenerator.CreateConverterClass();
     }
 }
