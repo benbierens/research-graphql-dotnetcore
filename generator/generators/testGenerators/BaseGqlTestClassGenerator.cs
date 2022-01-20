@@ -14,7 +14,27 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         mutationMethodsSubgenerator = new MutationMethodsSubgenerator(config);
         subscriptionMethodsSubgenerator = new SubscriptionMethodsSubgenerator(config);
     }
-    
+
+
+    //[SetUpFixture]
+    //public class DockerInitializer
+    //{
+    //    private readonly DockerController docker = new();
+
+    //    [OneTimeSetUp]
+    //    public void OneTimeGqlSetUp()
+    //    {
+    //        docker.Start();
+    //    }
+
+    //    [OneTimeTearDown]
+    //    public void OneTimeGqlTearDown()
+    //    {
+    //        docker.Stop();
+    //    }
+    //}
+
+
     public void CreateBaseGqlTestClass()
     {
         var fm = StartTestFile("BaseGqlTest");
@@ -28,14 +48,24 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         cm.AddUsing("Newtonsoft.Json");
 
         cm.AddAttribute("Category(\"" + Config.Tests.TestCategory + "\")");
-        cm.AddProperty("Docker")
-            .IsType("DockerController")
-            .Build();
 
+        cm.AddLine("private DockerController docker = new DockerController();");
         cm.AddLine("private readonly HttpClient http = new HttpClient();");
         cm.AddLine("private readonly List<ISubscriptionHandle> handles = new List<ISubscriptionHandle>();");
-
         cm.AddBlankLine();
+
+        cm.AddLine("[OneTimeSetUp]");
+        cm.AddClosure("public void OneTimeGqlSetUp()", liner =>
+        {
+            liner.Add("docker.Start();");
+        });
+
+        cm.AddLine("[OneTimeTearDown]");
+        cm.AddClosure("public void OneTimeGqlTearDown()", liner =>
+        {
+            liner.Add("docker.Stop();");
+        });
+
         cm.AddLine("[SetUp]");
         cm.AddClosure("public void GqlSetUp()", liner => 
         {
