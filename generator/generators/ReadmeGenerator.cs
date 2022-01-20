@@ -16,7 +16,7 @@ public class ReadmeGenerator : BaseGenerator
             liner.Add("## Build Development:");
             liner.Add("`dotnet build " + src + "`");
             liner.Add("## Run:");
-            liner.Add("`dotnet run -p " + src + "`");
+            liner.Add("`dotnet run --project " + src + "`");
             liner.Add("## Test:");
             liner.Add("### All:");
             liner.Add("`dotnet test " + test + "`");

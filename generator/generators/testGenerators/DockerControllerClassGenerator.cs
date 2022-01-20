@@ -14,7 +14,7 @@ public class DockerControllerClassGenerator : BaseGenerator
 
         cm.AddClosure("public void Start()", liner =>
         {
-            liner.Add("RunCommand(\"dotnet\", \"publish\", \"" + Config.Output.SourceFolder + "\", \"-c\", \"release\");");
+            liner.Add("RunCommand(\"dotnet\", \"publish\", \"../../../../" + Config.Output.SourceFolder + "\", \"-c\", \"release\");");
             liner.Add("RunCommand(\"docker-compose\", \"up\", \"-d\");");
         });
 
