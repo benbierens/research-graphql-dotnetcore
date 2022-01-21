@@ -1,4 +1,6 @@
 
+using System;
+
 public class BaseGqlTestClassGenerator : BaseGenerator
 {
     public BaseGqlTestClassGenerator(GeneratorConfig config)
@@ -40,6 +42,16 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         cm.AddProperty("Gql")
             .IsType("Gql")
             .Build();
+
+        AddCreateTestModelMethods(cm);
+    }
+
+    private void AddCreateTestModelMethods(ClassMaker cm)
+    {
+        IterateModelsInDependencyOrder(m =>
+        {
+            // add CreateTestModel => testdata.id = await Gql.create(testdate.tocreate);
+        });
     }
 
     private void AddDockerInitializer(ClassMaker cm)

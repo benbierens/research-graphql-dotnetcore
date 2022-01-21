@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System;
+using System.Collections.Generic;
 
 public class BaseGenerator
 {
@@ -131,5 +132,33 @@ public class BaseGenerator
             Update = Config.GraphQl.GqlMutationsUpdateMethod + model.Name + Config.GraphQl.GqlMutationsInputTypePostfix,
             Delete = Config.GraphQl.GqlMutationsDeleteMethod + model.Name + Config.GraphQl.GqlMutationsInputTypePostfix
         };
+    }
+
+    public void IterateModelsInDependencyOrder(Action<GeneratorConfig.ModelConfig> onModel)
+    {
+        var remainingModels = Models.ToList();
+        var initialized = new List<string>();
+
+        while (remainingModels.Count > 0)
+        {
+            var model = remainingModels[0];
+            remainingModels.RemoveAt(0);
+
+            if (CanInitialize(model, initialized))
+            {
+                onModel(model);
+                initialized.Add(model.Name);
+            }
+            else
+            {
+                remainingModels.Add(model);
+            }
+        }
+    }
+
+    private bool CanInitialize(GeneratorConfig.ModelConfig m, List<string> initialized)
+    {
+        var foreign = GetForeignProperties(m);
+        return foreign.All(f => f.IsSelfReference || initialized.Contains(f.Name));
     }
 }

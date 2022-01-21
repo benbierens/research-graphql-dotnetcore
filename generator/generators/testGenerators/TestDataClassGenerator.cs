@@ -39,33 +39,13 @@ public class TestDataClassGenerator : BaseGenerator
 
     private void AddConstructor(ClassMaker cm)
     {
-        var remainingModels = Models.ToList();
-        var initialized = new List<string>();
-
-        cm.AddClosure("public TestData()", liner => 
+        cm.AddClosure("public TestData()", liner =>
         {
-            while (remainingModels.Count > 0)
+            IterateModelsInDependencyOrder(m =>
             {
-                var model = remainingModels[0];
-                remainingModels.RemoveAt(0);
-
-                if (CanInitialize(model, initialized))
-                {
-                    InitializeModel(liner, model);
-                    initialized.Add(model.Name);
-                }
-                else
-                {
-                    remainingModels.Add(model);
-                }
-            }
+                InitializeModel(liner, m);
+            });
         });
-    }
-
-    private bool CanInitialize(GeneratorConfig.ModelConfig m, List<string> initialized)
-    {
-        var foreign = GetForeignProperties(m);
-        return foreign.All(f => f.IsSelfReference || initialized.Contains(f.Name));
     }
 
     private void InitializeModel(Liner liner, GeneratorConfig.ModelConfig m)
