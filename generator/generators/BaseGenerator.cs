@@ -17,13 +17,13 @@ public class BaseGenerator
     public FileMaker StartSrcFile(string subfolder, string filename)
     {
         var f = Path.Join(Config.Output.ProjectRoot, Config.Output.SourceFolder, Config.Output.GeneratedFolder, subfolder, filename + ".cs");
-        return new FileMaker(Config, f);
+        return new FileMaker(f, Config.GenerateNamespace);
     }
 
     public FileMaker StartTestFile(string filename)
     {
         var f = Path.Join(Config.Output.ProjectRoot, Config.Output.TestFolder, Config.Tests.SubFolder, filename + ".cs");
-        return new FileMaker(Config, f);
+        return new FileMaker(f, Config.Output.TestFolder);
     }
 
     public CodeFileModifier ModifyFile(string filename)

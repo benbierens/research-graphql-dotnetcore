@@ -15,30 +15,16 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         subscriptionMethodsSubgenerator = new SubscriptionMethodsSubgenerator(config);
     }
 
-
-    //[SetUpFixture]
-    //public class DockerInitializer
-    //{
-    //    private readonly DockerController docker = new();
-
-    //    [OneTimeSetUp]
-    //    public void OneTimeGqlSetUp()
-    //    {
-    //        docker.Start();
-    //    }
-
-    //    [OneTimeTearDown]
-    //    public void OneTimeGqlTearDown()
-    //    {
-    //        docker.Stop();
-    //    }
-    //}
-
-
     public void CreateBaseGqlTestClass()
     {
         var fm = StartTestFile("BaseGqlTest");
-        var cm = fm.AddClass("BaseGqlTest");
+        AddBaseGqlTestClass(fm.AddClass("BaseGqlTest"));
+        AddDockerInitializer(fm.AddClass("DockerInitializer"));
+        fm.Build();
+    }
+
+    private void AddBaseGqlTestClass(ClassMaker cm)
+    {
         cm.AddUsing("NUnit.Framework");
         cm.AddUsing("System");
         cm.AddUsing("System.Net.Http");
@@ -46,34 +32,22 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         cm.AddUsing("System.Threading.Tasks");
         cm.AddUsing("System.Collections.Generic");
         cm.AddUsing("Newtonsoft.Json");
+        cm.AddUsing(Config.GenerateNamespace);
 
         cm.AddAttribute("Category(\"" + Config.Tests.TestCategory + "\")");
 
-        cm.AddLine("private DockerController docker = new DockerController();");
         cm.AddLine("private readonly HttpClient http = new HttpClient();");
         cm.AddLine("private readonly List<ISubscriptionHandle> handles = new List<ISubscriptionHandle>();");
         cm.AddBlankLine();
 
-        cm.AddLine("[OneTimeSetUp]");
-        cm.AddClosure("public void OneTimeGqlSetUp()", liner =>
-        {
-            liner.Add("docker.Start();");
-        });
-
-        cm.AddLine("[OneTimeTearDown]");
-        cm.AddClosure("public void OneTimeGqlTearDown()", liner =>
-        {
-            liner.Add("docker.Stop();");
-        });
-
         cm.AddLine("[SetUp]");
-        cm.AddClosure("public void GqlSetUp()", liner => 
+        cm.AddClosure("public void GqlSetUp()", liner =>
         {
             liner.Add("TestData = new TestData();");
         });
 
         cm.AddLine("[TearDown]");
-        cm.AddClosure("public async Task GqlTearDown()", liner => 
+        cm.AddClosure("public async Task GqlTearDown()", liner =>
         {
             liner.StartClosure("foreach (var h in handles)");
             liner.Add("await h.Unsubscribe();");
@@ -86,10 +60,25 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             .Build();
 
         AddModelMethods(cm);
-
-        fm.Build();
     }
     
+    private void AddDockerInitializer(ClassMaker cm)
+    {
+        cm.AddAttribute("SetUpFixture");
+        cm.AddLine("private readonly DockerController docker = new DockerController();");
+        cm.AddLine("[OneTimeSetUp]");
+        cm.AddClosure("public void OneTimeGqlSetUp()", liner =>
+        {
+            liner.Add("docker.Start();");
+        });
+
+        cm.AddLine("[OneTimeTearDown]");
+        cm.AddClosure("public void OneTimeGqlTearDown()", liner =>
+        {
+            liner.Add("docker.Stop();");
+        });
+    }
+
     private void AddModelMethods(ClassMaker cm)
     {
         foreach (var m in Models)

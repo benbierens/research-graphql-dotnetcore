@@ -11,6 +11,7 @@
         var cm = fm.AddClass("Converters");
         cm.Modifiers.Clear();
         cm.Modifiers.Add("static");
+        cm.AddUsing(Config.GenerateNamespace);
 
         foreach (var m in Models)
         {

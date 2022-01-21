@@ -3,14 +3,14 @@ using System.Linq;
 
 public class FileMaker
 {
-    private readonly GeneratorConfig.ConfigSection config;
     private readonly string filename;
+    private readonly string @namespace;
     private readonly List<ClassMaker> classMakers = new List<ClassMaker>();
 
-    public FileMaker(GeneratorConfig.ConfigSection config, string filename)
+    public FileMaker(string filename, string @namespace)
     {
-        this.config = config;
         this.filename = filename;
+        this.@namespace = @namespace;
     }
 
     public ClassMaker AddClass(string className)
@@ -39,7 +39,7 @@ public class FileMaker
         liner.Add("// This file is generated.");
         liner.Add("");
 
-        liner.StartClosure("namespace " + config.GenerateNamespace);
+        liner.StartClosure("namespace " + @namespace);
         
         foreach (var c in classMakers)
         {

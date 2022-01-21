@@ -20,6 +20,7 @@ public class TestDataClassGenerator : BaseGenerator
     {
         var fm = StartTestFile("TestData");
         var cm = fm.AddClass("TestData");
+        cm.AddUsing(Config.GenerateNamespace);
 
         foreach (var m in Models)
         {

@@ -29,6 +29,8 @@ public class QueryClassGenerator : BaseGenerator
     private void CreateQueryDataClass(FileMaker fm)
     {
         var cm = fm.AddClass("GqlData<T>");
+        cm.AddUsing(Config.GenerateNamespace);
+
         cm.AddProperty("Data")
             .IsType("T")
             .IsNullable()
