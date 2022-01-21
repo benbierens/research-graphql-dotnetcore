@@ -1,4 +1,6 @@
-﻿public class ConverterClassGenerator : BaseGenerator
+﻿using System.Collections.Generic;
+
+public class ConverterClassGenerator : BaseGenerator
 {
     public ConverterClassGenerator(GeneratorConfig config)
         : base(config)
@@ -25,36 +27,77 @@
     {
         var inputTypes = GetInputTypeNames(model);
         var l = model.Name.FirstToLower();
+        var foreignProperties = GetForeignProperties(model);
 
-        AddConvertMethod(cm, model, inputTypes.Create, Config.GraphQl.GqlMutationsCreateMethod);
-        AddConvertMethod(cm, model, inputTypes.Update, Config.GraphQl.GqlMutationsUpdateMethod, model.Name + "Id = " + l + ".Id,");
-
-        cm.AddClosure("public static " + inputTypes.Delete + " To" + Config.GraphQl.GqlMutationsDeleteMethod + "(this " + model.Name + " " + l + ")", liner =>
+        cm.AddClosure("public static " + inputTypes.Create + " To" + Config.GraphQl.GqlMutationsCreateMethod + GetCreateArguments(model, l, foreignProperties), liner =>
         {
-            liner.StartClosure("return new " + inputTypes.Delete);
-            liner.Add(model.Name + "Id = " + l + ".Id,");
-            liner.EndClosure(";");
-        });
-    }
-
-    private void AddConvertMethod(ClassMaker cm, GeneratorConfig.ModelConfig model, string inputType, string mutationMethod, string firstLine = "")
-    {
-        var l = model.Name.FirstToLower();
-        cm.AddClosure("public static " + inputType + " To" + mutationMethod + "(this " + model.Name + " " + l + ")", liner =>
-        {
-            liner.StartClosure("return new " + inputType);
-            if (!string.IsNullOrWhiteSpace(firstLine)) liner.Add(firstLine);
+            liner.StartClosure("return new " + inputTypes.Create);
             foreach (var f in model.Fields)
             {
                 liner.Add(f.Name + " = " + l + "." + f.Name + ",");
             }
-            var foreignProperties = GetForeignProperties(model);
             foreach (var f in foreignProperties)
             {
-                liner.Add(f.WithId + " = " + l + "." + f.WithId + ",");
+                liner.Add(f.WithId + " = " + f.WithId.FirstToLower() + ",");
             }
             liner.EndClosure(";");
         });
     }
 
+    private string GetCreateArguments(GeneratorConfig.ModelConfig model, string l, ForeignProperty[] foreignProperties)
+    {
+        var args = new List<string>();
+        args.Add("this " + model.Name + " " + l);
+        foreach (var f in foreignProperties)
+        {
+            if (f.IsSelfReference)
+            {
+                args.Add(Config.IdType + "? " + f.WithId.FirstToLower());
+            }
+            else
+            {
+                args.Add(Config.IdType + " " + f.WithId.FirstToLower());
+            }
+        }
+
+        return "(" + string.Join(", ", args) + ")";
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //private void AddConvertMethod(ClassMaker cm, GeneratorConfig.ModelConfig model, string inputType, string mutationMethod, string firstLine = "")
+    //{
+    //    var l = model.Name.FirstToLower();
+    //    cm.AddClosure("public static " + inputType + " To" + mutationMethod + "(this " + model.Name + " " + l + ")", liner =>
+    //    {
+    //        liner.StartClosure("return new " + inputType);
+    //        if (!string.IsNullOrWhiteSpace(firstLine)) liner.Add(firstLine);
+    //        foreach (var f in model.Fields)
+    //        {
+    //            liner.Add(f.Name + " = " + l + "." + f.Name + ",");
+    //        }
+    //        var foreignProperties = GetForeignProperties(model);
+    //        foreach (var f in foreignProperties)
+    //        {
+    //            liner.Add(f.WithId + " = " + l + "." + f.WithId + ",");
+    //        }
+    //        liner.EndClosure(";");
+    //    });
+    //}
+
+    //private void AddCreateConvertMethod(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputType, string mutationMethod, string firstLine = "")
+    //{
+
+    //}
 }

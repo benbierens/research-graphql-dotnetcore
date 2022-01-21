@@ -12,6 +12,7 @@ public class QueryClassGenerator : BaseGenerator
         foreach (var m in Models)
         {
             CreateQueryClassForModel(fm, m);
+            CreateMutationResponseClassForModel(fm, m);
         }
 
         fm.Build();
@@ -26,7 +27,15 @@ public class QueryClassGenerator : BaseGenerator
             .Build();
     }
 
-    private void CreateQueryDataClass(FileMaker fm)
+    private void CreateMutationResponseClassForModel(FileMaker fm, GeneratorConfig.ModelConfig m)
+    {
+        var cm = fm.AddClass(Config.GraphQl.GqlMutationsCreateMethod + m.Name + "Response");
+        cm.AddProperty(Config.GraphQl.GqlMutationsCreateMethod + m.Name)
+            .IsType("MutationResponse")
+            .Build();
+    }
+
+private void CreateQueryDataClass(FileMaker fm)
     {
         var cm = fm.AddClass("GqlData<T>");
         cm.AddUsing(Config.GenerateNamespace);

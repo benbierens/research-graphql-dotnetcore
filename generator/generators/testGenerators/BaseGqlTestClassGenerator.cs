@@ -66,6 +66,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
     {
         cm.AddAttribute("SetUpFixture");
         cm.AddLine("private readonly DockerController docker = new DockerController();");
+        cm.AddBlankLine();
         cm.AddLine("[OneTimeSetUp]");
         cm.AddClosure("public void OneTimeGqlSetUp()", liner =>
         {
@@ -93,7 +94,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             liner.Add("var response = await http.PostAsync(\"http://localhost/graphql/\", new StringContent(query, Encoding.UTF8, \"application/json\"));");
             liner.Add("var content = await response.Content.ReadAsStringAsync();");
             liner.Add("var result = JsonConvert.DeserializeObject<GqlData<T>>(content);");
-            liner.Add("if (result.Data == null) throw new Exception(\"GraphQl operation failed.\");");
+            liner.Add("if (result.Data == null) throw new Exception(\"GraphQl operation failed. Query: '\" + query + \"' Response: '\" + content + \"'\");");
             liner.Add("return result.Data;");
         });
 
@@ -150,9 +151,37 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             cm.AddClosure("protected async Task<" + Config.IdType + "> Create" + m.Name + "(" + inputNames.Create + " input)", liner =>
             {
-                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsCreateMethod.FirstToLower() +  m.Name + "(input: {" + GetCreateMutationInput(m) + "}) { id } }\\\"}\";");
-                liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
-                liner.Add("return data.Id;");
+                liner.Add("var fields = \"\";");
+                foreach (var f in m.Fields)
+                {
+                    if (RequiresQuotes(f.Type))
+                    {
+                        liner.Add("fields += \" " + f.Name.FirstToLower() + ": \\\\\\\"\" + input." + f.Name + " + \"\\\\\\\"\";");
+                    }
+                    else
+                    {
+                        liner.Add("fields += \" " + f.Name.FirstToLower() + ": \" + input." + f.Name + ";");
+                    }
+                }
+                var foreignProperties = GetForeignProperties(m);
+                foreach (var f in foreignProperties)
+                {
+                    if (f.IsSelfReference)
+                    {
+                        liner.Add("if (input." + f.WithId + " != null) fields += \" " + f.WithId.FirstToLower() + ": \" + input." + f.WithId + ";");
+                    }
+                    else
+                    {
+                        liner.Add("fields += \" " + f.WithId.FirstToLower() + ": \" + input." + f.WithId + ";");
+                    }
+                }
+                liner.AddBlankLine();
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsCreateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
+
+                var templateField = Config.GraphQl.GqlMutationsCreateMethod + m.Name;
+                var templateType = templateField + "Response";
+                liner.Add("var data = await PostRequest<" + templateType + ">(mutation);");
+                liner.Add("return data." + templateField + ".Id;");
             });
         }
 
@@ -177,7 +206,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
                 {
                     liner.Add("if (input." + f.WithId + " != null) fields += \" " + f.WithId.FirstToLower() + ": \" + input." + f.WithId + ";");
                 }
-
+                liner.AddBlankLine();
                 liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsUpdateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
                 liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
                 liner.Add("return data.Id;");
