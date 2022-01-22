@@ -59,7 +59,8 @@
     },
     "Tests": {
       "testCategory": "GraphQlTests",
-      "subFolder": "graphQlTests"
+      "subFolder": "graphQlTests",
+      "utilsFolder": "utils"
     }
   },
   "models": [

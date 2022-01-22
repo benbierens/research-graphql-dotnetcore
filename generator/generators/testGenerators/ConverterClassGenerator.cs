@@ -9,7 +9,7 @@ public class ConverterClassGenerator : BaseGenerator
 
     public void CreateConverterClass()
     {
-        var fm = StartTestFile("Converters");
+        var fm = StartTestUtilsFile("Converters");
         var cm = fm.AddClass("Converters");
         cm.Modifiers.Clear();
         cm.Modifiers.Add("static");

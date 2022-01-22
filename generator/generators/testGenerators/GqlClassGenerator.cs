@@ -17,7 +17,7 @@ public class GqlClassGenerator : BaseGenerator
 
     public void CreateGqlClass()
     {
-        var fm = StartTestFile("Gql");
+        var fm = StartTestUtilsFile("Gql");
         var cm = fm.AddClass("Gql");
 
         cm.AddUsing("Newtonsoft.Json");
@@ -25,6 +25,7 @@ public class GqlClassGenerator : BaseGenerator
         cm.AddUsing("System.Collections.Generic");
         cm.AddUsing("System.Net.Http");
         cm.AddUsing("System.Threading.Tasks");
+        cm.AddUsing("System.Text");
         cm.AddUsing(Config.GenerateNamespace);
 
         cm.AddLine("private readonly HttpClient http = new HttpClient();");

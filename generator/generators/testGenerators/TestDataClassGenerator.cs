@@ -18,7 +18,7 @@ public class TestDataClassGenerator : BaseGenerator
 
     public void CreateTestDataClass()
     {
-        var fm = StartTestFile("TestData");
+        var fm = StartTestUtilsFile("TestData");
         var cm = fm.AddClass("TestData");
         cm.AddUsing(Config.GenerateNamespace);
 

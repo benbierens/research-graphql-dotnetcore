@@ -7,15 +7,18 @@ public class DockerControllerClassGenerator : BaseGenerator
     
     public void CreateDockerControllerClass()
     {
-        var fm = StartTestFile("DockerController");
+        var fm = StartTestUtilsFile("DockerController");
         var cm = fm.AddClass("DockerController");
         cm.AddUsing("System");
         cm.AddUsing("System.Diagnostics");
+        cm.AddUsing("System.Threading");
 
         cm.AddClosure("public void Start()", liner =>
         {
             liner.Add("RunCommand(\"dotnet\", \"publish\", \"../../../../" + Config.Output.SourceFolder + "\", \"-c\", \"release\");");
             liner.Add("RunCommand(\"docker-compose\", \"up\", \"-d\");");
+            liner.AddBlankLine();
+            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(10));");
         });
 
         cm.AddClosure("public void Stop()", liner =>

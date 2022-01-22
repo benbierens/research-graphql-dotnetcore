@@ -103,6 +103,7 @@ public class GeneratorConfig
     {
         public string TestCategory { get; set; }
         public string SubFolder { get; set; }
+        public string UtilsFolder { get; set; }
     }
 
     public class ModelConfig

@@ -6,7 +6,7 @@ public class QueryClassGenerator : BaseGenerator
     
     public void CreateQueryClasses()
     {
-        var fm = StartTestFile("QueryClasses");
+        var fm = StartTestUtilsFile("QueryClasses");
         CreateQueryDataClass(fm);
 
         foreach (var m in Models)

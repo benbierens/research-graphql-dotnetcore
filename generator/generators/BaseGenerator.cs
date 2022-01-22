@@ -21,6 +21,12 @@ public class BaseGenerator
         return new FileMaker(f, Config.GenerateNamespace);
     }
 
+    public FileMaker StartTestUtilsFile(string filename)
+    {
+        var f = Path.Join(Config.Output.ProjectRoot, Config.Output.TestFolder, Config.Tests.SubFolder, Config.Tests.UtilsFolder, filename + ".cs");
+        return new FileMaker(f, Config.Output.TestFolder);
+    }
+
     public FileMaker StartTestFile(string filename)
     {
         var f = Path.Join(Config.Output.ProjectRoot, Config.Output.TestFolder, Config.Tests.SubFolder, filename + ".cs");

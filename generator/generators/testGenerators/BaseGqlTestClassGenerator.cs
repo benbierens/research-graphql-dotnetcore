@@ -1,5 +1,6 @@
 
 using System;
+using System.Collections.Generic;
 
 public class BaseGqlTestClassGenerator : BaseGenerator
 {
@@ -10,7 +11,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
 
     public void CreateBaseGqlTestClass()
     {
-        var fm = StartTestFile("BaseGqlTest");
+        var fm = StartTestUtilsFile("BaseGqlTest");
         AddBaseGqlTestClass(fm.AddClass("BaseGqlTest"));
         AddDockerInitializer(fm.AddClass("DockerInitializer"));
         fm.Build();
@@ -43,6 +44,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
             .IsType("Gql")
             .Build();
 
+        cm.AddBlankLine();
         AddCreateTestModelMethods(cm);
     }
 
@@ -50,7 +52,26 @@ public class BaseGqlTestClassGenerator : BaseGenerator
     {
         IterateModelsInDependencyOrder(m =>
         {
-            // add CreateTestModel => testdata.id = await Gql.create(testdate.tocreate);
+            var foreignProperties = GetForeignProperties(m);
+            cm.AddClosure("public async Task CreateTest" + m.Name + "()", liner =>
+            {
+                var arguments = new List<string>();
+                foreach (var f in foreignProperties)
+                {
+                    if (!f.IsSelfReference)
+                    {
+                        liner.Add("await CreateTest" + f.Type + "();");
+                        arguments.Add("TestData.Test" + f.Type + ".Id");
+                    }
+                    else
+                    {
+                        arguments.Add("null");
+                    }
+                }
+
+                var args = string.Join(", ", arguments);
+                liner.Add("TestData.Test" + m.Name + ".Id = await Gql.Create" + m.Name + "(TestData.Test" + m.Name + ".ToCreate(" + args + "));");
+            });
         });
     }
 
