@@ -26,6 +26,7 @@ public class GqlClassGenerator : BaseGenerator
         cm.AddUsing("System.Net.Http");
         cm.AddUsing("System.Threading.Tasks");
         cm.AddUsing("System.Text");
+        cm.AddUsing("NUnit.Framework");
         cm.AddUsing(Config.GenerateNamespace);
 
         cm.AddLine("private readonly HttpClient http = new HttpClient();");
@@ -49,8 +50,10 @@ public class GqlClassGenerator : BaseGenerator
 
         cm.AddClosure("private async Task<T> PostRequest<T>(string query)", liner =>
         {
+            liner.Add("TestContext.WriteLine(\"Request: '\" + query + \"'\");");
             liner.Add("var response = await http.PostAsync(\"http://localhost/graphql/\", new StringContent(query, Encoding.UTF8, \"application/json\"));");
             liner.Add("var content = await response.Content.ReadAsStringAsync();");
+            liner.Add("TestContext.WriteLine(\"Response: '\" + content + \"'\");");
             liner.Add("var result = JsonConvert.DeserializeObject<GqlData<T>>(content);");
             liner.Add("if (result.Data == null) throw new Exception(\"GraphQl operation failed. Query: '\" + query + \"' Response: '\" + content + \"'\");");
             liner.Add("return result.Data;");
