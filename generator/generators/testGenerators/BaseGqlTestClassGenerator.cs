@@ -28,12 +28,14 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         cm.AddClosure("public void GqlSetUp()", liner =>
         {
             liner.Add("TestData = new TestData();");
+            liner.Add("DockerController.Up();");
         });
 
         cm.AddLine("[TearDown]");
         cm.AddClosure("public async Task GqlTearDown()", liner =>
         {
             liner.Add("await Gql.CloseActiveSubscriptionHandles();");
+            liner.Add("DockerController.Down();");
         });
 
         cm.AddProperty("TestData")
@@ -78,18 +80,16 @@ public class BaseGqlTestClassGenerator : BaseGenerator
     private void AddDockerInitializer(ClassMaker cm)
     {
         cm.AddAttribute("SetUpFixture");
-        cm.AddLine("private readonly DockerController docker = new DockerController();");
-        cm.AddBlankLine();
         cm.AddLine("[OneTimeSetUp]");
         cm.AddClosure("public void OneTimeGqlSetUp()", liner =>
         {
-            liner.Add("docker.Start();");
+            liner.Add("DockerController.BuildImage();");
         });
 
         cm.AddLine("[OneTimeTearDown]");
         cm.AddClosure("public void OneTimeGqlTearDown()", liner =>
         {
-            liner.Add("docker.Stop();");
+            liner.Add("DockerController.DeleteImage();");
         });
     }
 }

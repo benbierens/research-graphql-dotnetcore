@@ -12,8 +12,10 @@ public class DockerControllerClassGenerator : BaseGenerator
         cm.AddUsing("System");
         cm.AddUsing("System.Diagnostics");
         cm.AddUsing("System.Threading");
+        cm.Modifiers.Clear();
+        cm.Modifiers.Add("static");
 
-        cm.AddClosure("public void Start()", liner =>
+        cm.AddClosure("public static void BuildImage()", liner =>
         {
             liner.Add("RunCommand(\"dotnet\", \"publish\", \"../../../../" + Config.Output.SourceFolder + "\", \"-c\", \"release\");");
             liner.Add("RunCommand(\"docker-compose\", \"up\", \"-d\");");
@@ -21,12 +23,31 @@ public class DockerControllerClassGenerator : BaseGenerator
             liner.Add("Thread.Sleep(TimeSpan.FromSeconds(10));");
         });
 
-        cm.AddClosure("public void Stop()", liner =>
+        cm.AddClosure("public static void Up()", liner =>
+        {
+            liner.Add("RunCommand(\"docker-compose\", \"up\", \"-d\");");
+            liner.AddBlankLine();
+            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(3));");
+        });
+
+        cm.AddClosure("public static void Down()", liner =>
+        {
+            liner.Add("RunCommand(\"docker-compose\", \"down\");");
+            liner.AddBlankLine();
+            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(3));");
+        });
+
+        cm.AddClosure("public static void ClearData()", liner =>
+        {
+            liner.Add("RunCommand(\"docker-compose\", \"rm\", \"-s\", \"-v\", \"-f\", \"" + Config.Database.DbContainerName + "\");");
+        });
+
+        cm.AddClosure("public static void DeleteImage()", liner =>
         {
             liner.Add("RunCommand(\"docker-compose\", \"down\", \"--rmi\", \"all\", \"-v\");");
         });
 
-        cm.AddClosure("private void RunCommand(string cmd, params string[] args)", liner =>
+        cm.AddClosure("private static void RunCommand(string cmd, params string[] args)", liner =>
         {
             liner.Add("var info = new ProcessStartInfo();");
             liner.Add("info.Arguments = string.Join(\" \", args);");
