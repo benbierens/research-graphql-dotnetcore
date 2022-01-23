@@ -21,7 +21,7 @@
 
         cm.AddLine("private static readonly HttpClient http = new HttpClient();");
         cm.AddLine("private static readonly string url = \"://localhost/graphql\";");
-
+        cm.AddBlankLine();
 
         cm.AddClosure("public static async Task<T> PostRequest<T>(string query)", liner =>
         {

@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 public class QueryTestsGenerator : BaseGenerator
 {
     public QueryTestsGenerator(GeneratorConfig config)
@@ -42,7 +41,10 @@ public class QueryTestsGenerator : BaseGenerator
             var foreignProperties = GetForeignProperties(m);
             foreach (var f in foreignProperties)
             {
-                liner.Add("Assert.That(all[0]." + f.WithId + ", Is.EqualTo(TestData.Test" + f.Type + ".Id), \"Incorrect " + m.Name + "." + f.WithId + "\");");
+                if (!f.IsSelfReference)
+                {
+                    liner.Add("Assert.That(all[0]." + f.WithId + ", Is.EqualTo(TestData.Test" + f.Type + ".Id), \"Incorrect " + m.Name + "." + f.WithId + "\");");
+                }
             }
         });
     }
