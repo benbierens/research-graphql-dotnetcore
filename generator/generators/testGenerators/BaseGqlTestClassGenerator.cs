@@ -25,10 +25,10 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         cm.AddAttribute("Category(\"" + Config.Tests.TestCategory + "\")");
 
         cm.AddLine("[SetUp]");
-        cm.AddClosure("public void GqlSetUp()", liner =>
+        cm.AddClosure("public async Task GqlSetUp()", liner =>
         {
             liner.Add("TestData = new TestData();");
-            liner.Add("DockerController.Up();");
+            liner.Add("await DockerController.Up();");
         });
 
         cm.AddLine("[TearDown]");
@@ -81,9 +81,9 @@ public class BaseGqlTestClassGenerator : BaseGenerator
     {
         cm.AddAttribute("SetUpFixture");
         cm.AddLine("[OneTimeSetUp]");
-        cm.AddClosure("public void OneTimeGqlSetUp()", liner =>
+        cm.AddClosure("public async Task OneTimeGqlSetUp()", liner =>
         {
-            liner.Add("DockerController.BuildImage();");
+            liner.Add("await DockerController.BuildImage();");
         });
 
         cm.AddLine("[OneTimeTearDown]");

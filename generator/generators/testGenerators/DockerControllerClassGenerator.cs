@@ -12,29 +12,30 @@ public class DockerControllerClassGenerator : BaseGenerator
         cm.AddUsing("System");
         cm.AddUsing("System.Diagnostics");
         cm.AddUsing("System.Threading");
+        cm.AddUsing("System.Threading.Tasks");
         cm.Modifiers.Clear();
         cm.Modifiers.Add("static");
 
-        cm.AddClosure("public static void BuildImage()", liner =>
+        cm.AddClosure("public static async Task BuildImage()", liner =>
         {
             liner.Add("RunCommand(\"dotnet\", \"publish\", \"../../../../" + Config.Output.SourceFolder + "\", \"-c\", \"release\");");
             liner.Add("RunCommand(\"docker-compose\", \"up\", \"-d\");");
             liner.AddBlankLine();
-            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(10));");
+            liner.Add("await Client.WaitUntilOnline();");
         });
 
-        cm.AddClosure("public static void Up()", liner =>
+        cm.AddClosure("public static async Task Up()", liner =>
         {
             liner.Add("RunCommand(\"docker-compose\", \"up\", \"-d\");");
             liner.AddBlankLine();
-            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(3));");
+            liner.Add("await Client.WaitUntilOnline();");
         });
 
         cm.AddClosure("public static void Down()", liner =>
         {
             liner.Add("RunCommand(\"docker-compose\", \"down\");");
             liner.AddBlankLine();
-            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(3));");
+            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(0.1));");
         });
 
         cm.AddClosure("public static void ClearData()", liner =>

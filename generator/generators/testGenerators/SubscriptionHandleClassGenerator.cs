@@ -42,7 +42,7 @@ public class SubscriptionHandleClassGenerator : BaseGenerator
 
         cm.AddClosure("public async Task Subscribe()", liner => 
         {
-            liner.Add("await ws.ConnectAsync(new Uri(\"ws://localhost/graphql\"), cts.Token);");
+            liner.Add("await ws.ConnectAsync(new Uri(Client.WsUrl), cts.Token);");
             liner.Add("var _ = Task.Run(ReceivingLoop);");
             liner.Add("var f = \"{\" + string.Join(\" \", fields) + \" }\";");
             liner.Add("await Send(\"{type: \\\"connection_init\\\", payload: {}}\");");

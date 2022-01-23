@@ -48,17 +48,6 @@ public class GqlClassGenerator : BaseGenerator
             subscriptionMethodsSubgenerator.AddSubscribeMethods(cm, m);
         }
 
-        cm.AddClosure("private async Task<T> PostRequest<T>(string query)", liner =>
-        {
-            liner.Add("TestContext.WriteLine(\"Request: '\" + query + \"'\");");
-            liner.Add("var response = await http.PostAsync(\"http://localhost/graphql/\", new StringContent(query, Encoding.UTF8, \"application/json\"));");
-            liner.Add("var content = await response.Content.ReadAsStringAsync();");
-            liner.Add("TestContext.WriteLine(\"Response: '\" + content + \"'\");");
-            liner.Add("var result = JsonConvert.DeserializeObject<GqlData<T>>(content);");
-            liner.Add("if (result.Data == null) throw new Exception(\"GraphQl operation failed. Query: '\" + query + \"' Response: '\" + content + \"'\");");
-            liner.Add("return result.Data;");
-        });
-
         cm.AddClosure("private async Task<SubscriptionHandle<T>> SubscribeTo<T>(string modelName, params string[] fields)", liner =>
         {
             liner.Add("var s = new SubscriptionHandle<T>(modelName, fields);");
@@ -82,7 +71,7 @@ public class GqlClassGenerator : BaseGenerator
             cm.AddClosure("public async Task<List<" + m.Name + ">> QueryAll" + m.Name + "s()", liner =>
             {
                 liner.Add("var query = \"{ \\\"query\\\": \\\"query { " + m.Name.FirstToLower() + "s { " + GetQueryFields(m) + " } } \\\" }\";");
-                liner.Add("var data = await PostRequest<All" + m.Name + "sQuery>(query);");
+                liner.Add("var data = await Client.PostRequest<All" + m.Name + "sQuery>(query);");
                 liner.Add("return data." + m.Name + "s;");
             });
         }
@@ -143,7 +132,7 @@ public class GqlClassGenerator : BaseGenerator
 
                 var templateField = Config.GraphQl.GqlMutationsCreateMethod + m.Name;
                 var templateType = templateField + "Response";
-                liner.Add("var data = await PostRequest<" + templateType + ">(mutation);");
+                liner.Add("var data = await Client.PostRequest<" + templateType + ">(mutation);");
                 liner.Add("return data." + templateField + ".Id;");
             });
         }
@@ -171,7 +160,7 @@ public class GqlClassGenerator : BaseGenerator
                 }
                 liner.AddBlankLine();
                 liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsUpdateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
-                liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
+                liner.Add("var data = await Client.PostRequest<MutationResponse>(mutation);");
                 liner.Add("return data.Id;");
             });
         }
@@ -182,7 +171,7 @@ public class GqlClassGenerator : BaseGenerator
             {
                 var fields = m.Name.FirstToLower() + "Id: \" + input." + m.Name + "Id + \"";
                 liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsDeleteMethod.FirstToLower() + m.Name + "(input: {" + fields + "}) { id } }\\\"}\";");
-                liner.Add("var data = await PostRequest<MutationResponse>(mutation);");
+                liner.Add("var data = await Client.PostRequest<MutationResponse>(mutation);");
                 liner.Add("return data.Id;");
             });
         }
