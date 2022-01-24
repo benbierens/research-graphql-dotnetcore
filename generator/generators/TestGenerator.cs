@@ -8,8 +8,10 @@ public class TestGenerator : BaseGenerator
     private readonly TestDataClassGenerator testDataClassGenerator;
     private readonly ConverterClassGenerator converterClassGenerator;
     private readonly GqlClassGenerator gqlClassGenerator;
-    private readonly QueryTestsGenerator queryTestsGenerator;
     private readonly ClientClassGenerator clientClassGenerator;
+
+    private readonly QueryTestsGenerator queryTestsGenerator;
+    private readonly UpdateTestsGenerator updateTestsGenerator;
 
     public TestGenerator(GeneratorConfig config)
         : base(config)
@@ -21,8 +23,10 @@ public class TestGenerator : BaseGenerator
         testDataClassGenerator = new TestDataClassGenerator(config);
         converterClassGenerator = new ConverterClassGenerator(config);
         gqlClassGenerator = new GqlClassGenerator(config);
-        queryTestsGenerator = new QueryTestsGenerator(config);
         clientClassGenerator = new ClientClassGenerator(config);
+
+        queryTestsGenerator = new QueryTestsGenerator(config);
+        updateTestsGenerator = new UpdateTestsGenerator(config);
     }
 
     public void GenerateTests()
@@ -37,7 +41,9 @@ public class TestGenerator : BaseGenerator
         testDataClassGenerator.CreateTestDataClass();
         converterClassGenerator.CreateConverterClass();
         gqlClassGenerator.CreateGqlClass();
-        queryTestsGenerator.CreateQueryTests();
         clientClassGenerator.CreateClientClass();
+
+        queryTestsGenerator.CreateQueryTests();
+        updateTestsGenerator.CreateUpdateTests();
     }
 }

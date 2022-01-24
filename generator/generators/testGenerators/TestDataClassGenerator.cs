@@ -22,6 +22,18 @@ public class TestDataClassGenerator : BaseGenerator
         var cm = fm.AddClass("TestData");
         cm.AddUsing(Config.GenerateNamespace);
 
+        cm.AddProperty("TestString")
+            .IsType("string")
+            .Build();
+
+        cm.AddProperty("TestInt")
+            .IsType("int")
+            .Build();
+
+        cm.AddProperty("TestFloat")
+            .IsType("float")
+            .Build();
+
         foreach (var m in Models)
         {
             cm.AddProperty("Test" + m.Name)
@@ -41,6 +53,11 @@ public class TestDataClassGenerator : BaseGenerator
     {
         cm.AddClosure("public TestData()", liner =>
         {
+            liner.Add("TestString = \"TestString\";");
+            liner.Add("TestInt = 12345;");
+            liner.Add("TestFloat = 12.34f;");
+            liner.AddBlankLine();
+
             IterateModelsInDependencyOrder(m =>
             {
                 InitializeModel(liner, m);
@@ -87,7 +104,7 @@ public class TestDataClassGenerator : BaseGenerator
 
     private string DummyString(GeneratorConfig.ModelConfig m, string fieldName)
     {
-        return "\"Test" + m.Name + "\"";
+        return "\"Test" + m.Name + "_" + fieldName + "\"";
     }
 
     private string DummyInt()

@@ -146,11 +146,11 @@ public class GqlClassGenerator : BaseGenerator
                 {
                     if (RequiresQuotes(f.Type))
                     {
-                        liner.Add("if (input." + f.Name + " != null) fields += \" " + m.Name.FirstToLower() + ": \\\"\" + input." + f.Name + " + \"\\\"\";");
+                        liner.Add("if (input." + f.Name + " != null) fields += \" " + f.Name.FirstToLower() + ": \\\\\\\"\" + input." + f.Name + " + \"\\\\\\\"\";");
                     }
                     else
                     {
-                        liner.Add("if (input." + f.Name + " != null) fields += \" " + m.Name.FirstToLower() + ": \" + input." + f.Name + ";");
+                        liner.Add("if (input." + f.Name + " != null) fields += \" " + f.Name.FirstToLower() + ": \" + input." + f.Name + ";");
                     }
                 }
                 var foreignProperties = GetForeignProperties(m);
