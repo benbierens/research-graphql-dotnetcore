@@ -14,6 +14,8 @@ public class GraphQlGenerator : BaseGenerator
         GenerateMutations();
     }
 
+    #region Queries
+
     private void GenerateQueries()
     {
         var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlQueriesFileName);
@@ -32,6 +34,10 @@ public class GraphQlGenerator : BaseGenerator
         fm.Build();
     }
 
+    #endregion
+
+    #region Subscriptions
+
     private void GenerateSubscriptions()
     {
         var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlSubscriptionsFilename);
@@ -49,6 +55,19 @@ public class GraphQlGenerator : BaseGenerator
 
         fm.Build();
     }
+
+    private void AddSubscriptionMethod(ClassMaker cm, string modelName, string method)
+    {
+        var n = modelName;
+        var l = n.FirstToLower();
+        cm.AddLine("[Subscribe]");
+        cm.AddLine("public " + n + " " + n + method + "([EventMessage] " + n + " _" + l + ") => _" + l + ";");
+        cm.AddBlankLine();
+    }
+
+    #endregion
+
+    #region Types
 
     private void GenerateTypes()
     {
@@ -79,132 +98,6 @@ public class GraphQlGenerator : BaseGenerator
         fm.Build();
     }
 
-    private void GenerateMutations()
-    {
-        var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlMutationsFilename);
-        var cm = StartClass(fm, Config.GraphQl.GqlMutationsClassName);
-        cm.AddUsing("System.Threading.Tasks");
-        cm.AddUsing("HotChocolate");
-        cm.AddUsing("HotChocolate.Subscriptions");
-
-        foreach (var model in Models)
-        {
-            var inputTypeNames = GetInputTypeNames(model);
-
-            AddCreateMutation(cm, model, inputTypeNames);
-            AddUpdateMutation(cm, model, inputTypeNames);
-            AddDeleteMutation(cm, model, inputTypeNames);
-        }
-
-        fm.Build();
-    }
-
-    private void AddSubscriptionMethod(ClassMaker cm, string modelName, string method)
-    {
-        var n = modelName;
-        var l = n.FirstToLower();
-        cm.AddLine("[Subscribe]");
-        cm.AddLine("public " + n + " " + n + method + "([EventMessage] " + n + " _" + l + ") => _" + l + ";");
-        cm.AddBlankLine();
-    }
-
-    private void AddCreateMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
-    {
-        cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsCreateMethod + model.Name +
-        "(" + inputTypeNames.Create + " input, [Service] ITopicEventSender sender)", liner =>
-        {
-            liner.StartClosure("var createEntity = new " + model.Name);
-            AddModelInitializer(liner, model, "input");
-            liner.EndClosure(";");
-
-            AddDatabaseAddAndSave(liner);
-
-            liner.Add("await sender.SendAsync(\"" + model.Name + Config.GraphQl.GqlSubscriptionCreatedMethod + "\", createEntity);");
-            liner.Add("return createEntity;");
-        });
-    }
-
-    private void AddUpdateMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
-    {
-        cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsUpdateMethod + model.Name +
-        "(" + inputTypeNames.Update + " input, [Service] ITopicEventSender sender)", liner =>
-        {
-            liner.Add("var updateEntity = " + Config.Database.DbAccesserClassName + ".Context.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
-            AddModelUpdater(liner, model, "input");
-            liner.Add(Config.Database.DbAccesserClassName + ".Context.SaveChanges();");
-
-            liner.Add("await sender.SendAsync(\"" + model.Name + Config.GraphQl.GqlSubscriptionUpdatedMethod + "\", updateEntity);");
-            liner.Add("return updateEntity;");
-        });
-    }
-
-    private void AddDeleteMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
-    {
-        cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsDeleteMethod + model.Name +
-        "(" + inputTypeNames.Delete + " input, [Service] ITopicEventSender sender)", liner =>
-        {
-            liner.Add(model.Name + "? deleteEntity = null;");
-
-            liner.StartClosure("using (var db = new DatabaseContext())");
-            liner.Add("deleteEntity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
-            liner.Add("db.Remove(deleteEntity);");
-            liner.Add("db.SaveChanges();");
-            liner.EndClosure();
-
-            liner.Add("await sender.SendAsync(\"" + model.Name + Config.GraphQl.GqlSubscriptionDeletedMethod + "\", deleteEntity);");
-            liner.Add("return deleteEntity;");
-        });
-    }
-
-    private void AddModelInitializer(Liner liner, GeneratorConfig.ModelConfig model, string inputName)
-    {
-        foreach (var field in model.Fields)
-        {
-            liner.Add(field.Name + " = " + inputName + "." + field.Name + ",");
-        }
-        var foreignProperties = GetForeignProperties(model);
-        foreach (var f in foreignProperties)
-        {
-            liner.Add(f.WithId + " = " + inputName + "." + f.WithId + ",");
-        }
-    }
-
-    private void AddDatabaseAddAndSave(Liner liner)
-    {
-        liner.Add("var db = " + Config.Database.DbAccesserClassName + ".Context;");
-        liner.Add("db.Add(createEntity);");
-        liner.Add("db.SaveChanges();");
-    }
-
-    private void AddModelUpdater(Liner liner, GeneratorConfig.ModelConfig model, string inputName)
-    {
-        foreach (var field in model.Fields)
-        {
-            AddAssignmentLine(liner, field.Type, field.Name, inputName);
-        }
-        var foreignProperties = GetForeignProperties(model);
-        foreach (var f in foreignProperties)
-        {
-            AddAssignmentLine(liner, Config.IdType, f.WithId, inputName);
-        }
-    }
-
-    private void AddAssignmentLine(Liner liner, string type, string fieldName, string inputName)
-    {
-        liner.Add("if (" + inputName + "." + fieldName + " != null) updateEntity." + fieldName + " = " + inputName + "." + fieldName + Nullability.GetValueAccessor(type) + ";");
-    }
-
-    private void AddModelFieldsAsNullable(ClassMaker cm, GeneratorConfig.ModelConfig model)
-    {
-        foreach (var f in model.Fields)
-        {
-            cm.AddProperty(f.Name)
-                .IsType(f.Type)
-                .IsNullable()
-                .Build();
-        }
-    }
-
     private void AddForeignIdProperties(ClassMaker cm, GeneratorConfig.ModelConfig model)
     {
         var foreignProperties = GetForeignProperties(model);
@@ -226,6 +119,17 @@ public class GraphQlGenerator : BaseGenerator
         }
     }
 
+    private void AddModelFieldsAsNullable(ClassMaker cm, GeneratorConfig.ModelConfig model)
+    {
+        foreach (var f in model.Fields)
+        {
+            cm.AddProperty(f.Name)
+                .IsType(f.Type)
+                .IsNullable()
+                .Build();
+        }
+    }
+
     private void AddForeignIdPropertiesAsNullable(ClassMaker cm, GeneratorConfig.ModelConfig model)
     {
         var foreignProperties = GetForeignProperties(model);
@@ -236,5 +140,132 @@ public class GraphQlGenerator : BaseGenerator
                 .IsNullable()
                 .Build();
         }
+    }
+
+    #endregion
+
+    #region Mutations
+
+    private void GenerateMutations()
+    {
+        var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlMutationsFilename);
+        var cm = StartClass(fm, Config.GraphQl.GqlMutationsClassName);
+        cm.AddUsing("System.Threading.Tasks");
+        cm.AddUsing("HotChocolate");
+        cm.AddUsing("HotChocolate.Subscriptions");
+
+        foreach (var model in Models)
+        {
+            var inputTypeNames = GetInputTypeNames(model);
+
+            AddCreateMutation(cm, model, inputTypeNames);
+            AddUpdateMutation(cm, model, inputTypeNames);
+            AddDeleteMutation(cm, model, inputTypeNames);
+        }
+
+        fm.Build();
+    }
+
+    #region Create
+
+    private void AddCreateMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
+    {
+        cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsCreateMethod + model.Name +
+        "(" + inputTypeNames.Create + " input, [Service] ITopicEventSender sender)", liner =>
+        {
+            liner.StartClosure("var createEntity = new " + model.Name);
+            AddModelInitializer(liner, model, "input");
+            liner.EndClosure(";");
+
+            AddDatabaseAddAndSave(liner);
+
+            liner.Add("await sender.SendAsync(\"" + model.Name + Config.GraphQl.GqlSubscriptionCreatedMethod + "\", createEntity);");
+            liner.Add("return createEntity;");
+        });
+    }
+
+    private void AddModelInitializer(Liner liner, GeneratorConfig.ModelConfig model, string inputName)
+    {
+        foreach (var field in model.Fields)
+        {
+            liner.Add(field.Name + " = " + inputName + "." + field.Name + ",");
+        }
+        var foreignProperties = GetForeignProperties(model);
+        foreach (var f in foreignProperties)
+        {
+            liner.Add(f.WithId + " = " + inputName + "." + f.WithId + ",");
+        }
+    }
+
+    private void AddDatabaseAddAndSave(Liner liner)
+    {
+        AddDbVar(liner);
+        liner.Add("db.Add(createEntity);");
+        liner.Add("db.SaveChanges();");
+    }
+
+    #endregion
+
+    #region Update
+
+    private void AddUpdateMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
+    {
+        cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsUpdateMethod + model.Name +
+        "(" + inputTypeNames.Update + " input, [Service] ITopicEventSender sender)", liner =>
+        {
+            AddDbVar(liner);
+            liner.Add("var updateEntity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
+            AddModelUpdater(liner, model, "input");
+            liner.Add("db.SaveChanges();");
+
+            liner.Add("await sender.SendAsync(\"" + model.Name + Config.GraphQl.GqlSubscriptionUpdatedMethod + "\", updateEntity);");
+            liner.Add("return updateEntity;");
+        });
+    }
+
+    private void AddModelUpdater(Liner liner, GeneratorConfig.ModelConfig model, string inputName)
+    {
+        foreach (var field in model.Fields)
+        {
+            AddAssignmentLine(liner, field.Type, field.Name, inputName);
+        }
+        var foreignProperties = GetForeignProperties(model);
+        foreach (var f in foreignProperties)
+        {
+            AddAssignmentLine(liner, Config.IdType, f.WithId, inputName);
+        }
+    }
+
+    private void AddAssignmentLine(Liner liner, string type, string fieldName, string inputName)
+    {
+        liner.Add("if (" + inputName + "." + fieldName + " != null) updateEntity." + fieldName + " = " + inputName + "." + fieldName + Nullability.GetValueAccessor(type) + ";");
+    }
+
+    #endregion
+
+    #region Delete
+
+    private void AddDeleteMutation(ClassMaker cm, GeneratorConfig.ModelConfig model, InputTypeNames inputTypeNames)
+    {
+        cm.AddClosure("public async Task<" + model.Name + "> " + Config.GraphQl.GqlMutationsDeleteMethod + model.Name +
+        "(" + inputTypeNames.Delete + " input, [Service] ITopicEventSender sender)", liner =>
+        {
+            AddDbVar(liner);
+            liner.Add("var deleteEntity = db.Set<" + model.Name + ">().Find(input." + model.Name + "Id);");
+            liner.Add("db.Remove(deleteEntity);");
+            liner.Add("db.SaveChanges();");
+
+            liner.Add("await sender.SendAsync(\"" + model.Name + Config.GraphQl.GqlSubscriptionDeletedMethod + "\", deleteEntity);");
+            liner.Add("return deleteEntity;");
+        });
+    }
+
+    #endregion
+
+    #endregion
+
+    private void AddDbVar(Liner liner)
+    {
+        liner.Add("var db = " + Config.Database.DbAccesserClassName + ".Context;");
     }
 }

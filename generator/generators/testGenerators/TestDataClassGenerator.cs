@@ -34,6 +34,10 @@ public class TestDataClassGenerator : BaseGenerator
             .IsType("float")
             .Build();
 
+        cm.AddProperty("TestDouble")
+            .IsType("double")
+            .Build();
+
         foreach (var m in Models)
         {
             cm.AddProperty("Test" + m.Name)
@@ -56,6 +60,7 @@ public class TestDataClassGenerator : BaseGenerator
             liner.Add("TestString = \"TestString\";");
             liner.Add("TestInt = 12345;");
             liner.Add("TestFloat = 12.34f;");
+            liner.Add("TestDouble = 23.45;");
             liner.AddBlankLine();
 
             IterateModelsInDependencyOrder(m =>
@@ -72,7 +77,7 @@ public class TestDataClassGenerator : BaseGenerator
         liner.Add("Id = " + DummyId() + ",");
         foreach (var f in m.Fields)
         {
-            liner.Add(f.Name + " = " + DummyForType(m, f.Type) + ",");
+            liner.Add(f.Name + " = " + DummyForType(m, f.Type, f.Name) + ",");
         }
         foreach (var f in foreign)
         {
@@ -92,11 +97,11 @@ public class TestDataClassGenerator : BaseGenerator
         throw new Exception("Unknown ID type: " + Config.IdType);
     }
 
-    private string DummyForType(GeneratorConfig.ModelConfig m, string type)
+    private string DummyForType(GeneratorConfig.ModelConfig m, string type, string name)
     {
         if (type == "int") return DummyInt();
         if (type == "float") return DummyFloat();
-        if (type == "string") return DummyString(m, type);
+        if (type == "string") return DummyString(m, name);
         if (type == "double") return DummyDouble();
         if (type == "bool") return "true";
         throw new Exception("Unknown type: " + type);
