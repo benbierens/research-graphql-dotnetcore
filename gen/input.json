@@ -65,78 +65,79 @@
   },
   "models": [
     {
-      "name": "Cat",
+      "name": "User",
       "fields": [
         {
           "name": "Name",
           "type": "string"
         },
         {
-          "name": "Age",
-          "type": "int"
-        }
-      ],
-      "hasMany": [
-        "CatToy"
-      ]
-    },
-    {
-      "name": "Couch",
-      "fields": [
+          "name": "EmailAddress",
+          "type": "string"
+        },
         {
-          "name": "Location",
+          "name": "DisplayName",
           "type": "string"
         }
       ],
       "hasMany": [
-        "Cat"
+        "Post",
+        "Comment",
+        "TeamMember"
       ]
     },
     {
-      "name": "CatToy",
+      "name": "Post",
       "fields": [
         {
-          "name": "Score",
-          "type": "int"
-        }
-      ]
-    },
-    {
-      "name": "Toy",
-      "fields": [
-        {
-          "name": "Label",
+          "name": "AssetUrl",
           "type": "string"
-        }
-      ],
-      "hasMany": [
-        "CatToy"
-      ]
-    },
-    {
-      "name": "Module",
-      "fields": [
+        },
+        {
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "name": "Description",
+          "type": "string"
+        },
         {
           "name": "CreatedUtc",
           "type": "string"
         }
       ],
       "hasMany": [
-        "Cat",
-        "Module"
+        "Comment"
       ]
     },
     {
-      "name": "Super",
+      "name": "Comment",
       "fields": [
         {
-          "name": "Author",
+          "name": "Content",
+          "type": "string"
+        },
+        {
+          "name": "CreatedUtc",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Team",
+      "fields": [
+        {
+          "name": "Title",
           "type": "string"
         }
       ],
       "hasMany": [
-        "Module"
+        "TeamMember",
+        "Team"
       ]
+    },
+    {
+      "name": "TeamMember"
     }
   ]
 }
