@@ -36,14 +36,14 @@ public class QueryTestsGenerator : BaseGenerator
 
             foreach (var f in m.Fields)
             {
-                liner.Add("Assert.That(all[0]." + f.Name + ", Is.EqualTo(TestData.Test" + m.Name + "." + f.Name + "), \"Incorrect " + m.Name + "." + f.Name + "\");");
+                liner.Add("Assert.That(all[0]." + f.Name + ", Is.EqualTo(TestData.Test" + m.Name + "." + f.Name + "), \"Queried incorrect " + m.Name + "." + f.Name + "\");");
             }
             var foreignProperties = GetForeignProperties(m);
             foreach (var f in foreignProperties)
             {
                 if (!f.IsSelfReference)
                 {
-                    liner.Add("Assert.That(all[0]." + f.WithId + ", Is.EqualTo(TestData.Test" + f.Type + ".Id), \"Incorrect " + m.Name + "." + f.WithId + "\");");
+                    liner.Add("Assert.That(all[0]." + f.WithId + ", Is.EqualTo(TestData.Test" + f.Type + ".Id), \"Queried incorrect " + m.Name + "." + f.WithId + "\");");
                 }
             }
         });

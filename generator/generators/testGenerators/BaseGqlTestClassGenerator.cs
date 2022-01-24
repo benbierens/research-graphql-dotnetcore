@@ -52,10 +52,12 @@ public class BaseGqlTestClassGenerator : BaseGenerator
 
     private void AddCreateTestModelMethods(ClassMaker cm)
     {
+        cm.AddUsing(Config.GenerateNamespace);
+
         IterateModelsInDependencyOrder(m =>
         {
             var foreignProperties = GetForeignProperties(m);
-            cm.AddClosure("public async Task CreateTest" + m.Name + "()", liner =>
+            cm.AddClosure("public async Task<" + m.Name + "> CreateTest" + m.Name + "()", liner =>
             {
                 var arguments = new List<string>();
                 foreach (var f in foreignProperties)
@@ -72,7 +74,9 @@ public class BaseGqlTestClassGenerator : BaseGenerator
                 }
 
                 var args = string.Join(", ", arguments);
-                liner.Add("TestData.Test" + m.Name + ".Id = await Gql.Create" + m.Name + "(TestData.Test" + m.Name + ".ToCreate(" + args + "));");
+                liner.Add("var entity = await Gql.Create" + m.Name + "(TestData.Test" + m.Name + ".ToCreate(" + args + "));");
+                liner.Add("TestData.Test" + m.Name + ".Id = entity.Id;");
+                liner.Add("return entity;");
             });
         });
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 public class GqlClassGenerator : BaseGenerator
@@ -101,11 +102,15 @@ public class GqlClassGenerator : BaseGenerator
 
         private void AddCreateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, InputTypeNames inputNames)
         {
-            cm.AddClosure("public async Task<" + Config.IdType + "> Create" + m.Name + "(" + inputNames.Create + " input)", liner =>
+            cm.AddClosure("public async Task<" + m.Name + "> Create" + m.Name + "(" + inputNames.Create + " input)", liner =>
             {
                 liner.Add("var fields = \"\";");
+                var fields = new List<string>();
+                fields.Add("id");
+
                 foreach (var f in m.Fields)
                 {
+                    fields.Add(f.Name.FirstToLower());
                     if (RequiresQuotes(f.Type))
                     {
                         liner.Add("fields += \" " + f.Name.FirstToLower() + ": \\\\\\\"\" + input." + f.Name + " + \"\\\\\\\"\";");
@@ -118,6 +123,7 @@ public class GqlClassGenerator : BaseGenerator
                 var foreignProperties = GetForeignProperties(m);
                 foreach (var f in foreignProperties)
                 {
+                    fields.Add(f.WithId.FirstToLower());
                     if (f.IsSelfReference)
                     {
                         liner.Add("if (input." + f.WithId + " != null) fields += \" " + f.WithId.FirstToLower() + ": \" + input." + f.WithId + ";");
@@ -128,22 +134,27 @@ public class GqlClassGenerator : BaseGenerator
                     }
                 }
                 liner.AddBlankLine();
-                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsCreateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
+                var queryFields = string.Join(" ", fields);
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsCreateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { " + queryFields + " } }\\\"}\";");
 
                 var templateField = Config.GraphQl.GqlMutationsCreateMethod + m.Name;
                 var templateType = templateField + "Response";
                 liner.Add("var data = await Client.PostRequest<" + templateType + ">(mutation);");
-                liner.Add("return data." + templateField + ".Id;");
+                liner.Add("return data." + templateField + ";");
             });
         }
 
         private void AddUpdateMutationMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, InputTypeNames inputNames)
         {
-            cm.AddClosure("public async Task<" + Config.IdType + "> Update" + m.Name + "(" + inputNames.Update + " input)", liner =>
+            cm.AddClosure("public async Task<" + m.Name + "> Update" + m.Name + "(" + inputNames.Update + " input)", liner =>
             {
                 liner.Add("var fields = \"" + m.Name.FirstToLower() + "Id: \" + input." + m.Name + "Id;");
+                var fields = new List<string>();
+                fields.Add("id");
+
                 foreach (var f in m.Fields)
                 {
+                    fields.Add(f.Name.FirstToLower());
                     if (RequiresQuotes(f.Type))
                     {
                         liner.Add("if (input." + f.Name + " != null) fields += \" " + f.Name.FirstToLower() + ": \\\\\\\"\" + input." + f.Name + " + \"\\\\\\\"\";");
@@ -156,12 +167,17 @@ public class GqlClassGenerator : BaseGenerator
                 var foreignProperties = GetForeignProperties(m);
                 foreach (var f in foreignProperties)
                 {
+                    fields.Add(f.WithId.FirstToLower());
                     liner.Add("if (input." + f.WithId + " != null) fields += \" " + f.WithId.FirstToLower() + ": \" + input." + f.WithId + ";");
                 }
                 liner.AddBlankLine();
-                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsUpdateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { id } }\\\"}\";");
-                liner.Add("var data = await Client.PostRequest<MutationResponse>(mutation);");
-                liner.Add("return data.Id;");
+                var queryFields = string.Join(" ", fields);
+                liner.Add("var mutation = \"{ \\\"query\\\": \\\"mutation { " + Config.GraphQl.GqlMutationsUpdateMethod.FirstToLower() + m.Name + "(input: { \" + fields + \" }) { " + queryFields + " } }\\\"}\";");
+
+                var templateField = Config.GraphQl.GqlMutationsUpdateMethod + m.Name;
+                var templateType = templateField + "Response";
+                liner.Add("var data = await Client.PostRequest<" + templateType + ">(mutation);");
+                liner.Add("return data." + templateField + ";");
             });
         }
 
