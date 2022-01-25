@@ -64,6 +64,17 @@ public class ClassMaker
         lines.AddRange(liner.GetLines());
     }
 
+    public void AddSubClass(string name, Action<ClassMaker> inClass)
+    {
+        var cm = new ClassMaker(name);
+        inClass(cm);
+        var liner = new Liner();
+        cm.Write(liner);
+
+        usings.AddRange(cm.GetUsings());
+        lines.AddRange(liner.GetLines());
+    }
+
     public string[] GetUsings()
     {
         return usings.ToArray();

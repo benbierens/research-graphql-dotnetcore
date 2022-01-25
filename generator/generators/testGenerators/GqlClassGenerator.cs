@@ -207,12 +207,12 @@ public class GqlClassGenerator : BaseGenerator
 
         public void AddSubscribeMethods(ClassMaker cm, GeneratorConfig.ModelConfig m)
         {
-            AddSubscribeCreatedMethod(cm, m, Config.GraphQl.GqlSubscriptionCreatedMethod);
-            AddSubscribeCreatedMethod(cm, m, Config.GraphQl.GqlSubscriptionUpdatedMethod);
-            AddSubscribeCreatedMethod(cm, m, Config.GraphQl.GqlSubscriptionDeletedMethod);
+            AddSubscribeMethod(cm, m, Config.GraphQl.GqlSubscriptionCreatedMethod);
+            AddSubscribeMethod(cm, m, Config.GraphQl.GqlSubscriptionUpdatedMethod);
+            AddSubscribeMethod(cm, m, Config.GraphQl.GqlSubscriptionDeletedMethod);
         }
 
-        private void AddSubscribeCreatedMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, string methodName)
+        private void AddSubscribeMethod(ClassMaker cm, GeneratorConfig.ModelConfig m, string methodName)
         {
             cm.AddClosure("public async Task<SubscriptionHandle<" + m.Name + ">> SubscribeTo" + m.Name + methodName + "()", liner =>
             {

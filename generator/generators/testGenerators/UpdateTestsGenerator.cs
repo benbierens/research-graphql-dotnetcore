@@ -1,4 +1,6 @@
-﻿public class UpdateTestsGenerator : BaseGenerator
+﻿using System.Linq;
+
+public class UpdateTestsGenerator : BaseGenerator
 {
     public UpdateTestsGenerator(GeneratorConfig config)
         : base(config)
@@ -17,8 +19,11 @@
 
         foreach (var m in Models)
         {
-            AddUpdateTest(cm, m);
-            AddUpdateAndQueryTest(cm, m);
+            if (m.Fields.Any())
+            {
+                AddUpdateTest(cm, m);
+                AddUpdateAndQueryTest(cm, m);
+            }
         }
 
         fm.Build();

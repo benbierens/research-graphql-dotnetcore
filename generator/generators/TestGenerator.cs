@@ -13,6 +13,8 @@ public class TestGenerator : BaseGenerator
     private readonly CreateTestsGenerator createTestsGenerator;
     private readonly QueryTestsGenerator queryTestsGenerator;
     private readonly UpdateTestsGenerator updateTestsGenerator;
+    private readonly DeleteTestsGenerator deleteTestsGenerator;
+    private readonly SubscriptionTestsGenerator subscriptionTestsGenerator;
 
     public TestGenerator(GeneratorConfig config)
         : base(config)
@@ -29,6 +31,8 @@ public class TestGenerator : BaseGenerator
         createTestsGenerator = new CreateTestsGenerator(config);
         queryTestsGenerator = new QueryTestsGenerator(config);
         updateTestsGenerator = new UpdateTestsGenerator(config);
+        deleteTestsGenerator = new DeleteTestsGenerator(config);
+        subscriptionTestsGenerator = new SubscriptionTestsGenerator(config);
     }
 
     public void GenerateTests()
@@ -48,5 +52,7 @@ public class TestGenerator : BaseGenerator
         createTestsGenerator.CreateCreateTests();
         queryTestsGenerator.CreateQueryTests();
         updateTestsGenerator.CreateUpdateTests();
+        deleteTestsGenerator.CreateDeleteTests();
+        subscriptionTestsGenerator.CreateSubscriptionTests();
     }
 }
