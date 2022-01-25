@@ -27,14 +27,14 @@ public class Generator : BaseGenerator
         MakeDir(Config.Output.SourceFolder);
         MakeDir(Config.Output.TestFolder);
 
-        //projectGenerator.CreateDotNetProject();
+        projectGenerator.CreateDotNetProject();
 
         MakeSrcDir(Config.Output.GeneratedFolder);
         dtoGenerator.GenerateDtos();
         databaseGenerator.GenerateDbContext();
         graphQlGenerator.GenerateGraphQl();
 
-        //projectGenerator.ModifyDefaultFiles();
+        projectGenerator.ModifyDefaultFiles();
         databaseGenerator.CreateInitialMigration();
 
         dockerGenerator.GenerateDockerFiles();
