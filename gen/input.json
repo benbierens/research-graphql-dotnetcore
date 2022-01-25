@@ -103,7 +103,11 @@
         },
         {
           "name": "CreatedUtc",
-          "type": "string"
+          "type": "DateTime"
+        },
+        {
+          "name": "ViewCount",
+          "type": "int"
         }
       ],
       "hasMany": [
@@ -120,6 +124,10 @@
         {
           "name": "CreatedUtc",
           "type": "string"
+        },
+        {
+          "name": "Rating",
+          "type": "float"
         }
       ]
     },
@@ -129,6 +137,10 @@
         {
           "name": "Title",
           "type": "string"
+        },
+        {
+          "name": "Score",
+          "type": "double"
         }
       ],
       "hasMany": [

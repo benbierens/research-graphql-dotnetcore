@@ -1,3 +1,5 @@
+using System.Linq;
+
 public class DtoGenerator : BaseGenerator
 {
     public DtoGenerator(GeneratorConfig config)
@@ -12,9 +14,14 @@ public class DtoGenerator : BaseGenerator
         foreach (var model in Models)
         {
             var fm = StartSrcFile(Config.Output.DtoSubFolder, model.Name);
+            TypeUtils.AddTypeRequiredUsing(fm, model);
+
             var cm = StartClass(fm, model.Name);
 
-            cm.AddUsing("System.Collections.Generic");
+            if (model.HasMany.Any())
+            {
+                cm.AddUsing("System.Collections.Generic");
+            }
 
             cm.AddProperty("Id")
                 .IsType(Config.IdType)

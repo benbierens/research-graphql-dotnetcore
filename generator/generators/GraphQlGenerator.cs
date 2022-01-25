@@ -43,7 +43,6 @@ public class GraphQlGenerator : BaseGenerator
         var fm = StartSrcFile(Config.Output.GraphQlSubFolder, Config.GraphQl.GqlSubscriptionsFilename);
         var cm = StartClass(fm, Config.GraphQl.GqlSubscriptionsClassName);
         cm.AddUsing("HotChocolate");
-        cm.AddUsing("HotChocolate.Subscriptions");
         cm.AddUsing("HotChocolate.Types");
 
         foreach (var model in Models)
@@ -75,6 +74,8 @@ public class GraphQlGenerator : BaseGenerator
 
         foreach (var model in Models)
         {
+            TypeUtils.AddTypeRequiredUsing(fm, model);
+
             var inputTypeNames = GetInputTypeNames(model);
 
             var addClass = StartClass(fm, inputTypeNames.Create);
@@ -238,7 +239,7 @@ public class GraphQlGenerator : BaseGenerator
 
     private void AddAssignmentLine(Liner liner, string type, string fieldName, string inputName)
     {
-        liner.Add("if (" + inputName + "." + fieldName + " != null) updateEntity." + fieldName + " = " + inputName + "." + fieldName + Nullability.GetValueAccessor(type) + ";");
+        liner.Add("if (" + inputName + "." + fieldName + " != null) updateEntity." + fieldName + " = " + inputName + "." + fieldName + TypeUtils.GetValueAccessor(type) + ";");
     }
 
     #endregion

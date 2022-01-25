@@ -46,7 +46,10 @@ public class ClassMaker
 
     public void AddUsing(string name)
     {
-        usings.Add(name);
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            usings.Add(name);
+        }
     }
 
     public void AddAttribute(string attribute)

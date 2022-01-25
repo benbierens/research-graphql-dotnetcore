@@ -6,6 +6,7 @@ public class FileMaker
     private readonly string filename;
     private readonly string @namespace;
     private readonly List<ClassMaker> classMakers = new List<ClassMaker>();
+    private readonly List<string> usings = new List<string>();
 
     public FileMaker(string filename, string @namespace)
     {
@@ -27,11 +28,19 @@ public class FileMaker
         return cm;
     }
 
+    public void AddUsing(string name)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            usings.Add(name);
+        }
+    }
+
     public void Build()
     {
         var liner = new Liner();
-        var usings = classMakers.SelectMany(c => c.GetUsings()).Distinct().ToArray();
-        foreach (var u in usings)
+        var allUsings = classMakers.SelectMany(c => c.GetUsings()).Concat(usings).Distinct().ToArray();
+        foreach (var u in allUsings)
         {
             liner.Add("using " + EndStatement(u));
         }

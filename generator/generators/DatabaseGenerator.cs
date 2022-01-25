@@ -27,7 +27,6 @@ public class DatabaseGenerator : BaseGenerator
         var cm = StartClass(fm, Config.Database.DbContextClassName);
 
         cm.AddUsing("System");
-        cm.AddUsing("System.Collections.Generic");
         cm.AddUsing("Microsoft.EntityFrameworkCore");
 
         cm.AddInherrit("DbContext");

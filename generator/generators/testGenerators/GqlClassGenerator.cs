@@ -21,16 +21,11 @@ public class GqlClassGenerator : BaseGenerator
         var fm = StartTestUtilsFile("Gql");
         var cm = fm.AddClass("Gql");
 
-        cm.AddUsing("Newtonsoft.Json");
-        cm.AddUsing("System");
         cm.AddUsing("System.Collections.Generic");
         cm.AddUsing("System.Net.Http");
         cm.AddUsing("System.Threading.Tasks");
-        cm.AddUsing("System.Text");
-        cm.AddUsing("NUnit.Framework");
         cm.AddUsing(Config.GenerateNamespace);
 
-        cm.AddLine("private readonly HttpClient http = new HttpClient();");
         cm.AddLine("private readonly List<ISubscriptionHandle> handles = new List<ISubscriptionHandle>();");
         cm.AddBlankLine();
 

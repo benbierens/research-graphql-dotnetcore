@@ -108,7 +108,7 @@ public class PropertyMaker
         if (isNullable) return "";
         if (isList) return " = new List<" + type + ">();";
         if (isDbSet) return "Set<" + type + ">();";
-        if (Nullability.IsNullableRequiredForType(type)) return Nullability.GetInitializerForType(type);
+        if (TypeUtils.IsNullableRequiredForType(type)) return TypeUtils.GetInitializerForType(type);
         return " = new " + type + "();";
     }
 }

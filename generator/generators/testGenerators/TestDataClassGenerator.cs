@@ -20,6 +20,7 @@ public class TestDataClassGenerator : BaseGenerator
     {
         var fm = StartTestUtilsFile("TestData");
         var cm = fm.AddClass("TestData");
+        cm.AddUsing("System");
         cm.AddUsing(Config.GenerateNamespace);
 
         cm.AddProperty("TestString")
@@ -36,6 +37,10 @@ public class TestDataClassGenerator : BaseGenerator
 
         cm.AddProperty("TestDouble")
             .IsType("double")
+            .Build();
+
+        cm.AddProperty("TestDateTime")
+            .IsType("DateTime")
             .Build();
 
         foreach (var m in Models)
@@ -104,6 +109,7 @@ public class TestDataClassGenerator : BaseGenerator
         if (type == "string") return DummyString(m, name);
         if (type == "double") return DummyDouble();
         if (type == "bool") return "true";
+        if (type == "DateTime") return DummyDateTime();
         throw new Exception("Unknown type: " + type);
     }
 
@@ -127,5 +133,10 @@ public class TestDataClassGenerator : BaseGenerator
     {
         dummyDouble += 0.1;
         return dummyDouble.ToString();
+    }
+
+    public string DummyDateTime()
+    {
+        return "new DateTime()";
     }
 }
