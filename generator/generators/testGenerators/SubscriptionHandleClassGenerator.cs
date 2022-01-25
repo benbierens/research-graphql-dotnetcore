@@ -57,12 +57,9 @@ public class SubscriptionHandleClassGenerator : BaseGenerator
 
         cm.AddClosure("public T AssertReceived()", liner => 
         {
-            liner.Add("var line = received.SingleOrDefault(l => l.Contains(subscription));");
-            liner.StartClosure("if (line == null)");
-            liner.Add("Assert.Fail(\"Expected subscription '\" + subscription + \"', but was not received.\");");
-            liner.Add("throw new Exception();");
-            liner.EndClosure();
+            liner.Add("var line = GetSubscriptionLine();");
             liner.StartClosure("if (line.Contains(\"errors\"))");
+            AddSubscriptionDebugLine(liner);
             liner.Add("Assert.Fail(\"Response contains errors:\" + line);");
             liner.Add("throw new Exception();");
             liner.EndClosure();
@@ -70,6 +67,19 @@ public class SubscriptionHandleClassGenerator : BaseGenerator
             liner.Add("sub = sub.Substring(sub.IndexOf('{'));");
             liner.Add("sub = sub.Substring(0, sub.IndexOf('}') + 1);");
             liner.Add("return JsonConvert.DeserializeObject<T>(sub);");
+        });
+
+        cm.AddClosure("private string GetSubscriptionLine()", liner =>
+        {
+            liner.Add("var start = DateTime.Now;");
+            liner.StartClosure("while ((DateTime.Now - start) < TimeSpan.FromSeconds(15))");
+            liner.Add("var line = received.SingleOrDefault(l => l.Contains(subscription));");
+            liner.Add("if (line != null) return line;");
+            liner.Add("Thread.Sleep(100);");
+            liner.EndClosure();
+            AddSubscriptionDebugLine(liner);
+            liner.Add("Assert.Fail(\"Expected subscription '\" + subscription + \"', but was not received.\");");
+            liner.Add("throw new Exception();");
         });
 
         cm.AddClosure("private async Task ReceivingLoop()", liner => 
@@ -93,4 +103,8 @@ public class SubscriptionHandleClassGenerator : BaseGenerator
         fm.Build();
     }
 
+    private void AddSubscriptionDebugLine(Liner liner)
+    {
+        liner.Add("TestContext.WriteLine(\"Subscription channel received: \" + string.Join(Environment.NewLine, received));");
+    }
 }
