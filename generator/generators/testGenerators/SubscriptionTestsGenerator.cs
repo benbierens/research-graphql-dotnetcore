@@ -1,4 +1,7 @@
-﻿public class SubscriptionTestsGenerator : BaseGenerator
+﻿using System;
+using System.Linq;
+
+public class SubscriptionTestsGenerator : BaseGenerator
 {
     public SubscriptionTestsGenerator(GeneratorConfig config)
         : base(config)
@@ -19,19 +22,27 @@
         {
             createCm.AddInherrit("SubscriptionTests");
             createCm.Modifiers.Clear();
-            foreach (var m in Models) AddCreateSubscriptionTest(cm, m);
+            foreach (var m in Models) AddCreateSubscriptionTest(createCm, m);
         });
 
         cm.AddSubClass("UpdateSubscriptionTests", updateCm =>
         {
             updateCm.AddInherrit("SubscriptionTests");
             updateCm.Modifiers.Clear();
+            foreach (var m in Models)
+            {
+                if (m.Fields.Any())
+                {
+                    AddUpdateSubscriptionTest(updateCm, m);
+                }
+            }
         });
 
         cm.AddSubClass("DeleteSubscriptionTests", deleteCm =>
         {
             deleteCm.AddInherrit("SubscriptionTests");
             deleteCm.Modifiers.Clear();
+            foreach (var m in Models) AddDeleteSubscriptionTest(deleteCm, m);
         });
 
         fm.Build();
@@ -47,18 +58,55 @@
             liner.Add("await CreateTest" + m.Name + "();");
             liner.AddBlankLine();
             liner.Add("var entity = handle.AssertReceived();");
+            AddEntityFieldAsserts(liner, m, "Incorrect entity published with " + Config.GraphQl.GqlSubscriptionCreatedMethod + " subscription:");
+        });
+    }
+
+    private void AddUpdateSubscriptionTest(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    {
+        var inputTypes = GetInputTypeNames(m);
+
+        cm.AddLine("[Test]");
+        cm.AddClosure("public async Task ShouldPublishSubscriptionOnUpdate" + m.Name + "()", liner =>
+        {
+            liner.Add("var handle = await Gql.SubscribeTo" + m.Name + Config.GraphQl.GqlSubscriptionUpdatedMethod + "();");
+            liner.AddBlankLine();
+            liner.Add("await CreateTest" + m.Name + "();");
+            liner.AddBlankLine();
+
+            liner.StartClosure("await Gql.Update" + m.Name + "(new " + inputTypes.Update);
+            liner.Add(m.Name + "Id = TestData.Test" + m.Name + ".Id,");
             foreach (var f in m.Fields)
             {
-                liner.Add("Assert.That(entity." + f.Name + ", Is.EqualTo(TestData.Test" + m.Name + "." + f.Name + "), \"Incorrect " + m.Name + "." + f.Name + " received from subscription.\");");
+                liner.Add(f.Name + " = TestData.Test" + f.Type.FirstToUpper() + ",");
             }
-            var foreignProperties = GetForeignProperties(m);
-            foreach (var f in foreignProperties)
+            liner.EndClosure(");");
+
+            liner.Add("var entity = handle.AssertReceived();");
+            foreach (var f in m.Fields)
             {
-                if (!f.IsSelfReference)
-                {
-                    liner.Add("Assert.That(entity." + f.WithId + ", Is.EqualTo(TestData.Test" + f.Type + ".Id), \"Incorrect " + m.Name + "." + f.WithId + " received from subscription.\");");
-                }
+                liner.Add("Assert.That(entity." + f.Name + ", Is.EqualTo(TestData.Test" + f.Type.FirstToUpper() + "), \"Incorrect entity published with " + Config.GraphQl.GqlSubscriptionUpdatedMethod + " subscription:" + m.Name + "." + f.Name + "\");");
             }
+        });
+    }
+
+    private void AddDeleteSubscriptionTest(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    {
+        var inputTypes = GetInputTypeNames(m);
+
+        cm.AddLine("[Test]");
+        cm.AddClosure("public async Task ShouldPublishSubscriptionOnDelete" + m.Name + "()", liner =>
+        {
+            liner.Add("var handle = await Gql.SubscribeTo" + m.Name + Config.GraphQl.GqlSubscriptionDeletedMethod + "();");
+            liner.AddBlankLine();
+            liner.Add("await CreateTest" + m.Name + "();");
+            liner.AddBlankLine();
+            liner.StartClosure("await Gql.Delete" + m.Name + "(new " + inputTypes.Delete);
+            liner.Add(m.Name + "Id = TestData.Test" + m.Name + ".Id,");
+            liner.EndClosure(");");
+
+            liner.Add("var entity = handle.AssertReceived();");
+            AddEntityFieldAsserts(liner, m, "Incorrect entity published with " + Config.GraphQl.GqlSubscriptionDeletedMethod + " subscription:");
         });
     }
 }

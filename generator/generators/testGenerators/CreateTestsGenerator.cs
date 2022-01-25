@@ -29,18 +29,7 @@
         {
             liner.Add("var entity = await CreateTest" + m.Name + "();");
             liner.AddBlankLine();
-            foreach (var f in m.Fields)
-            {
-                liner.Add("Assert.That(entity." + f.Name + ", Is.EqualTo(TestData.Test" + m.Name + "." + f.Name + "), \"Created incorrect " + m.Name + "." + f.Name + "\");");
-            }
-            var foreignProperties = GetForeignProperties(m);
-            foreach (var f in foreignProperties)
-            {
-                if (!f.IsSelfReference)
-                {
-                    liner.Add("Assert.That(entity." + f.WithId + ", Is.EqualTo(TestData.Test" + f.Type + ".Id), \"Created incorrect " + m.Name + "." + f.WithId + "\");");
-                }
-            }
+            AddEntityFieldAsserts(liner, m, "Incorrect entity returned after creation:");
         });
     }
 }
