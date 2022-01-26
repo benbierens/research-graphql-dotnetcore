@@ -113,6 +113,7 @@ public class BaseGenerator
     {
         foreach (var f in model.Fields)
         {
+            cm.AddUsing(TypeUtils.GetTypeRequiredUsing(f.Type));
             cm.AddProperty(f.Name)
                 .IsType(f.Type)
                 .Build();

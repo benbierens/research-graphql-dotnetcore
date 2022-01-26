@@ -22,7 +22,6 @@ public class GqlClassGenerator : BaseGenerator
         var cm = fm.AddClass("Gql");
 
         cm.AddUsing("System.Collections.Generic");
-        cm.AddUsing("System.Net.Http");
         cm.AddUsing("System.Threading.Tasks");
         cm.AddUsing(Config.GenerateNamespace);
 
@@ -106,14 +105,7 @@ public class GqlClassGenerator : BaseGenerator
                 foreach (var f in m.Fields)
                 {
                     fields.Add(f.Name.FirstToLower());
-                    if (RequiresQuotes(f.Type))
-                    {
-                        liner.Add("fields += \" " + f.Name.FirstToLower() + ": \\\\\\\"\" + input." + f.Name + " + \"\\\\\\\"\";");
-                    }
-                    else
-                    {
-                        liner.Add("fields += \" " + f.Name.FirstToLower() + ": \" + input." + f.Name + ";");
-                    }
+                    liner.Add("fields +=" + GetValueExpressionAsNonNullable(cm, f));
                 }
                 var foreignProperties = GetForeignProperties(m);
                 foreach (var f in foreignProperties)
@@ -150,14 +142,7 @@ public class GqlClassGenerator : BaseGenerator
                 foreach (var f in m.Fields)
                 {
                     fields.Add(f.Name.FirstToLower());
-                    if (RequiresQuotes(f.Type))
-                    {
-                        liner.Add("if (input." + f.Name + " != null) fields += \" " + f.Name.FirstToLower() + ": \\\\\\\"\" + input." + f.Name + " + \"\\\\\\\"\";");
-                    }
-                    else
-                    {
-                        liner.Add("if (input." + f.Name + " != null) fields += \" " + f.Name.FirstToLower() + ": \" + input." + f.Name + ";");
-                    }
+                    liner.Add("if (input." + f.Name + " != null) fields +=" + GetValueExpressionWithNullabilityAccessor(cm, f));
                 }
                 var foreignProperties = GetForeignProperties(m);
                 foreach (var f in foreignProperties)
@@ -187,9 +172,30 @@ public class GqlClassGenerator : BaseGenerator
             });
         }
 
-        private bool RequiresQuotes(string type)
+        private static string GetValueExpressionWithNullabilityAccessor(ClassMaker cm, GeneratorConfig.ModelField f)
         {
-            return type == "string";
+            var valueAccessor = TypeUtils.GetValueAccessor(f.Type);
+            return GetValueExpression(cm, f, valueAccessor);
+        }
+
+        private static string GetValueExpressionAsNonNullable(ClassMaker cm, GeneratorConfig.ModelField f)
+        {
+            return GetValueExpression(cm, f, "");
+        }
+
+        private static string GetValueExpression(ClassMaker cm, GeneratorConfig.ModelField f, string accessor)
+        {
+            var converter = TypeUtils.GetToStringConverter(f.Type);
+            cm.AddUsing(TypeUtils.GetConverterRequiredUsing(f.Type));
+
+            if (TypeUtils.RequiresQuotes(f.Type))
+            {
+                return " \" " + f.Name.FirstToLower() + ": \\\\\\\"\" + input." + f.Name + accessor + converter + " + \"\\\\\\\"\";";
+            }
+            else
+            {
+                return " \" " + f.Name.FirstToLower() + ": \" + input." + f.Name + accessor + converter + ";";
+            }
         }
     }
 

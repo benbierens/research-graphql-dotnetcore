@@ -5,28 +5,34 @@ public static class TypeUtils
 {
     private class TypeInfo
     {
-        public TypeInfo(string type, string defaultInitializer, string valueAccessor, string requiredUsing = "")
+        public TypeInfo(string type, string defaultInitializer, string valueAccessor, string requiredUsing = "", bool requiresQuotes = false, string toStringConverter = "", string converterUsing = "")
         {
             Type = type;
             DefaultInitializer = defaultInitializer;
             ValueAccessor = valueAccessor;
             RequiredUsing = requiredUsing;
+            RequiresQuotes = requiresQuotes;
+            ToStringConverter = toStringConverter;
+            ConverterUsing = converterUsing;
         }
 
         public string Type { get; }
         public string DefaultInitializer { get; }
         public string ValueAccessor { get; }
         public string RequiredUsing { get; }
+        public bool RequiresQuotes { get; }
+        public string ToStringConverter { get; }
+        public string ConverterUsing { get; }
     }
 
     private static List<TypeInfo> types = new List<TypeInfo>
     {
         new TypeInfo("int", "", ".Value"),
         new TypeInfo("bool", "", ".Value"),
-        new TypeInfo("string", " = \"\";", ""),
-        new TypeInfo("float", "", ".Value"),
-        new TypeInfo("double", "", ".Value"),
-        new TypeInfo("DateTime", "", ".Value", "System")
+        new TypeInfo("string", " = \"\";", "", null, true),
+        new TypeInfo("float", "", ".Value", "", false, ".ToString(CultureInfo.InvariantCulture)", "System.Globalization"),
+        new TypeInfo("double", "", ".Value", "", false, ".ToString(CultureInfo.InvariantCulture)", "System.Globalization"),
+        new TypeInfo("DateTime", "", ".Value", "System", true, ".ToString(\"o\")")
     };
 
     public static bool IsNullableRequiredForType(string type)
@@ -44,34 +50,24 @@ public static class TypeUtils
         return Get(type).ValueAccessor;
     }
 
-    public static void AddTypeRequiredUsing(FileMaker fm, GeneratorConfig.ModelConfig m)
+    public static string GetTypeRequiredUsing(string type)
     {
-        foreach (var f in m.Fields) AddTypeRequiredUsing(fm, f);
+        return Get(type).RequiredUsing;
     }
 
-    public static void AddTypeRequiredUsing(ClassMaker cm, GeneratorConfig.ModelConfig m)
+    public static bool RequiresQuotes(string type)
     {
-        foreach (var f in m.Fields) AddTypeRequiredUsing(cm, f);
+        return Get(type).RequiresQuotes;
     }
 
-    public static void AddTypeRequiredUsing(FileMaker fm, GeneratorConfig.ModelField f)
+    public static string GetToStringConverter(string type)
     {
-        AddTypeRequiredUsing(fm, f.Type);
+        return Get(type).ToStringConverter;
     }
 
-    public static void AddTypeRequiredUsing(ClassMaker cm, GeneratorConfig.ModelField f)
+    public static string GetConverterRequiredUsing(string type)
     {
-        AddTypeRequiredUsing(cm, f.Type);
-    }
-
-    public static void AddTypeRequiredUsing(FileMaker fm, string type)
-    {
-        fm.AddUsing(Get(type).RequiredUsing);
-    }
-
-    public static void AddTypeRequiredUsing(ClassMaker cm, string type)
-    {
-        cm.AddUsing(Get(type).RequiredUsing);
+        return Get(type).ConverterUsing;
     }
 
     private static TypeInfo Get(string type)

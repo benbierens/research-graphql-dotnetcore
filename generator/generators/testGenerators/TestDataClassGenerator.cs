@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 public class TestDataClassGenerator : BaseGenerator
@@ -120,19 +121,19 @@ public class TestDataClassGenerator : BaseGenerator
 
     private string DummyInt()
     {
-        return (++dummyInt).ToString();
+        return (++dummyInt).ToString(CultureInfo.InvariantCulture);
     }
 
     private string DummyFloat()
     {
         dummyFloat += 0.1f;
-        return dummyFloat.ToString();
+        return dummyFloat.ToString(CultureInfo.InvariantCulture) + "f";
     }
 
     private string DummyDouble()
     {
         dummyDouble += 0.1;
-        return dummyDouble.ToString();
+        return dummyDouble.ToString(CultureInfo.InvariantCulture);
     }
 
     public string DummyDateTime()

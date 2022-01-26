@@ -14,7 +14,6 @@ public class DtoGenerator : BaseGenerator
         foreach (var model in Models)
         {
             var fm = StartSrcFile(Config.Output.DtoSubFolder, model.Name);
-            TypeUtils.AddTypeRequiredUsing(fm, model);
 
             var cm = StartClass(fm, model.Name);
 

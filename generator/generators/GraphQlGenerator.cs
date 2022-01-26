@@ -74,8 +74,6 @@ public class GraphQlGenerator : BaseGenerator
 
         foreach (var model in Models)
         {
-            TypeUtils.AddTypeRequiredUsing(fm, model);
-
             var inputTypeNames = GetInputTypeNames(model);
 
             var addClass = StartClass(fm, inputTypeNames.Create);
