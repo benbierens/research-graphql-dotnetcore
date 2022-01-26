@@ -35,12 +35,14 @@ public class DockerControllerClassGenerator : BaseGenerator
         {
             liner.Add("RunCommand(\"docker-compose\", \"down\");");
             liner.AddBlankLine();
-            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(0.1));");
+            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(1.0));");
         });
 
         cm.AddClosure("public static void ClearData()", liner =>
         {
             liner.Add("RunCommand(\"docker-compose\", \"rm\", \"-s\", \"-v\", \"-f\", \"" + Config.Database.DbContainerName + "\");");
+            liner.AddBlankLine();
+            liner.Add("Thread.Sleep(TimeSpan.FromSeconds(1.0));");
         });
 
         cm.AddClosure("public static void DeleteImage()", liner =>

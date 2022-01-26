@@ -138,6 +138,6 @@ public class TestDataClassGenerator : BaseGenerator
 
     public string DummyDateTime()
     {
-        return "new DateTime()";
+        return "DateTime.Now";
     }
 }

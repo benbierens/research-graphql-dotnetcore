@@ -36,6 +36,7 @@ public class BaseGqlTestClassGenerator : BaseGenerator
         {
             liner.Add("await Gql.CloseActiveSubscriptionHandles();");
             liner.Add("DockerController.Down();");
+            liner.Add("DockerController.ClearData();");
         });
 
         cm.AddProperty("TestData")
